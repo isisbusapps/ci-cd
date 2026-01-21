@@ -19,3 +19,13 @@ A mix of both nano and micro VMs will allow performance to be maintained when ru
 ## How to create & destroy runners
 
 Terraform can be used to create & destroy VMs 
+GitHub workflow_job webhook can trigger creation & destruction of VMs & runners
+
+1. workflow_job webhook requests runner
+2. terraform creates vm
+3. Install ephemeral runner & software on VM
+4. ephemeral runner takes on job
+5. ephemeral runner finishes job & stops accepting
+6. remove runner
+7. terraform removes VM
+
