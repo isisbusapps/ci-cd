@@ -28,9 +28,6 @@ jobs:
       - name: Terraform init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan
-
       - name: Terraform Apply
         run: terraform apply -auto-approve
       
@@ -53,7 +50,7 @@ jobs:
     steps:
       - name: test
         run: |
-          echo ${RUN_ANSIBLE}
+          echo ${env.RUN_ANSIBLE}
 
   # apply-gh-action-ansible:
   #   if: ${{ $needs.apply-terraform.outputs.run-ansible }}
