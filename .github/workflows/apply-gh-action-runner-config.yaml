@@ -11,7 +11,7 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
-      run-ansible: ${{steps.vm_output.outputs.run-ansible}}
+      RUN_ANSIBLE_OUTPUT: ${{steps.created_hosts_ini.outputs.RUN_ANSIBLE}}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -34,11 +34,11 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan 1> /dev/null
       
-      - name: Get VM IPs
-        id: vm_output
+      - name: Create hosts.ini
+        id: created_hosts_ini
         run: |
-          $(echo "$(terraform output -json vm_ips)" | jq -e 'length > 0' \
-          && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini) >> "$GITHUB_OUTPUT"
+          echo "RUN_ANSBILE = $($(echo "$(terraform output -json vm_ips)" | jq -e 'length > 0' \
+          && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini)) >> "$GITHUB_OUTPUT"
 
       - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
         run: terraform destroy --auto-approve 1> /dev/null
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: apply-terraform
     env:
-      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible}}
+      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_OUTPUT}}
     steps:
       - name: test
         run: |
