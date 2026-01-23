@@ -31,7 +31,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: self-hosted-gh-runners/terraform
-        run: terraform apply - auto-approve
+        run: terraform apply -auto-approve
       
       - name: Get VM IPs
         run: |
