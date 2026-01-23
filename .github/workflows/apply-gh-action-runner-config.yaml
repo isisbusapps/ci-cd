@@ -11,8 +11,8 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
-      run-ansible-output: ${{ steps.check_hosts.outputs.run-ansible }}
-      run-ansible-output-test: ${{ steps.check_hosts.outputs.run-ansible-test }}
+      run-ansible: ${{ steps.check_hosts.outputs.run-ansible }}
+      run-ansible-test: ${{ steps.check_hosts.outputs.run-ansible-test }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
