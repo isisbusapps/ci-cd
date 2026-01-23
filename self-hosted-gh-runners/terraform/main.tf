@@ -16,7 +16,7 @@ resource "openstack_compute_instance_v2" "basic" {
     name = "DS-GH-Action-Runner-Terraform-Test-${count.index + 1}"
     image_id = data.openstack_images_image_ids_v2.images.ids[0]
     flavor_id = data.openstack_compute_flavor_v2.l3nano.id
-    key_pair = "scd-cloud-dev"
+    key_pair = "FASE_CLOUD_DEV"
     security_groups = ["default"]
 
     metadata = {
