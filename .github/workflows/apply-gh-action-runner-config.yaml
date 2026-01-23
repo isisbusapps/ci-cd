@@ -6,7 +6,8 @@ jobs:
   apply-terraform:
     runs-on: ubuntu-latest
     defaults:
-      working-directory: self-hosted-gh-runners/terraform
+      run:
+        working-directory: self-hosted-gh-runners/terraform
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
