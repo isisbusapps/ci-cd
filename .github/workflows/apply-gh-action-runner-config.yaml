@@ -33,12 +33,15 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan 1> /dev/null
-      
-      - name: Create hosts.ini
+
+      - name: Check length of VM List
         id: created_hosts_ini
         run: |
-          echo "RUN_ANSBILE=$($(echo '$(terraform output -json vm_ips)' | jq -e 'length > 0') >> "$GITHUB_OUTPUT" \
-          && echo '$(terraform output -json vm_ips)' | jq -r '.[]' >> ../ansible/hosts.ini))"
+          echo "RUN_ANSBILE=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT"
+      
+      - name: Create hosts.ini
+        run: |
+          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini
 
       - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
         run: terraform destroy --auto-approve 1> /dev/null
