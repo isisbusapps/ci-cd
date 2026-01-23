@@ -1,0 +1,9 @@
+# Ignore any OpenStack cloud application creds
+clouds.yaml
+
+# Ignore any Terraform State / Init 
+terraform.*
+*.terraform*
+
+# Ignore Ansible hosts.ini
+hosts.ini

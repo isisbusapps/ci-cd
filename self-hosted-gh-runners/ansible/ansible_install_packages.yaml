@@ -1,0 +1,29 @@
+- name: Install dependencies
+  hosts: runnerServer
+  remote_user: ubuntu
+
+  tasks:
+    - name: Install docker
+      become: true
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Install docker buildkit features
+      become: true
+      ansible.builtin.apt:
+        name: docker-buildx
+        state: present
+      
+    - name: Install GitHub CLI
+      become: true
+      ansible.builtin.apt:
+        name: gh
+        state: present
+
+    - name: Setup docker user
+      become: true
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: yes
