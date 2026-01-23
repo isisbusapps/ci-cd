@@ -5,6 +5,8 @@ on:
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
+    defaults:
+      working-directory: self-hosted-gh-runners/terraform
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
@@ -22,15 +24,12 @@ jobs:
           terraform_version: 1.14.3
 
       - name: Terraform init
-        working-directory: self-hosted-gh-runners/terraform
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: self-hosted-gh-runners/terraform
         run: terraform plan
 
       - name: Terraform Apply
-        working-directory: self-hosted-gh-runners/terraform
         run: terraform apply -auto-approve
       
       - name: Get VM IPs
@@ -39,7 +38,6 @@ jobs:
           && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini) >> "$GITHUB_OUTPUT"
         
       - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
-        working-directory: self-hosted-gh-runners/terraform
         run: terraform destroy --auto-approve
   
   test-output:
