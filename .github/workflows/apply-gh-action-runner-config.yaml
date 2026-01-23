@@ -55,10 +55,11 @@ jobs:
     env:
       RUN_ANSIBLE_OUTPUT: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_OUTPUT }}
       RUN_ANSIBLE_TEST: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_TEST }}
+      TEST: "This is another test"
     steps:
       - name: test
         run: |
-          echo "${{ env.RUN_ANSIBLE }}" && echo "${{ env.RUN_ANSBILE_TEST }}"
+          echo "${{ env.RUN_ANSIBLE }}" && echo "${{ env.RUN_ANSBILE_TEST }}" && echo ${{ env.TEST }}
 
   # apply-gh-action-ansible:
   #   if: ${{ $needs.apply-terraform.outputs.run-ansible }}
