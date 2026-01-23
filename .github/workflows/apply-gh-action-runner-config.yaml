@@ -1,6 +1,6 @@
 name: apply-sh-gh-runner-config
 on: 
-  push:
+  workflow-dispatch:
 
 jobs:
   apply-terraform:
@@ -12,7 +12,6 @@ jobs:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
       run-ansible: ${{ steps.check_hosts.outputs.run-ansible }}
-      run-ansible-test: ${{ steps.check_hosts.outputs.run-ansible-test }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -38,8 +37,7 @@ jobs:
       - name: Check length of VM List
         id: check_hosts
         run: |
-          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
-          && echo "run-ansible-test=THIS_IS_A_TEST" >> "GITHUB_OUTPUT"
+          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT"
           
       
       - name: Create hosts.ini
@@ -54,13 +52,13 @@ jobs:
     needs: apply-terraform
     env:
       RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible }}
-      RUN_ANSIBLE_TEST: ${{ needs.apply-terraform.outputs.run-ansible-test }}
-      TEST: "This is another test"
     steps:
       - name: test
         run: |
           echo "${{ env.RUN_ANSIBLE }}" && echo "${{ env.RUN_ANSBILE_TEST }}" && echo ${{ env.TEST }}
 
-  # apply-gh-action-ansible:
-  #   if: ${{ $needs.apply-terraform.outputs.run-ansible }}
-  #   runs-on: ubuntu-lastest
+  apply-ansible:
+    if: ${{ $needs.apply-terraform.outputs.run-ansible }}
+    runs-on: ubuntu-lastest
+    needs: apply-terraform
+    steps:
