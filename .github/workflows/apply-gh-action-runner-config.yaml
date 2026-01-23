@@ -11,7 +11,8 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
-      RUN_ANSIBLE_OUTPUT: ${{steps.created_hosts_ini.outputs.RUN_ANSIBLE}}
+      RUN_ANSIBLE_OUTPUT: ${{steps.check_hosts.outputs.RUN_ANSIBLE}}
+      RUN_ANSIBLE_TEST: ${{ steps.check_hosts.outputs.RUN_ANSIBLE_TEST}}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -35,9 +36,11 @@ jobs:
         run: terraform apply -auto-approve tfplan 1> /dev/null
 
       - name: Check length of VM List
-        id: created_hosts_ini
+        id: check_hosts
         run: |
-          echo "RUN_ANSBILE=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT"
+          echo "RUN_ANSBILE=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
+          && echo "RUN_ANSIBLE_TEST=THIS_IS_A_TEST" >> "GITHUB_OUTPUT"
+          
       
       - name: Create hosts.ini
         run: |
@@ -50,11 +53,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: apply-terraform
     env:
-      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_OUTPUT}}
+      RUN_ANSIBLE_OUTPUT: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_OUTPUT }}
+      RUN_ANSIBLE_TEST: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_TEST }}
     steps:
       - name: test
         run: |
-          echo "${{ env.RUN_ANSIBLE }}"
+          echo "${{ env.RUN_ANSIBLE }}" && echo "${{ env.RUN_ANSBILE_TEST }}"
 
   # apply-gh-action-ansible:
   #   if: ${{ $needs.apply-terraform.outputs.run-ansible }}
