@@ -4,9 +4,14 @@ on: workflow-dispatch
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
+    env:
+      OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
       run-ansible: ${{steps.step6.outputs.run-ansible}}
     steps:
+      - name: Create clouds.yaml
+        run: echo ${{ secrets.OPENSTACK_CLOUDS }} >> ${{ github.workspace }}/clouds.yaml
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
