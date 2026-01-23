@@ -1,6 +1,6 @@
 name: apply-sh-gh-runner-config
 on: 
-  workflow_dispatch:
+  push:
 
 jobs:
   apply-terraform:
