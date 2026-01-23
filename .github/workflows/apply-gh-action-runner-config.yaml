@@ -11,7 +11,7 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
-      run-ansible: ${{steps.step6.outputs.run-ansible}}
+      run-ansible: ${{steps.vm_output.outputs.run-ansible}}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -35,6 +35,7 @@ jobs:
         run: terraform apply -auto-approve tfplan 1> /dev/null
       
       - name: Get VM IPs
+        id: vm_output
         run: |
           $(echo "$(terraform output -json vm_ips)" | jq -e 'length > 0' \
           && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini) >> "$GITHUB_OUTPUT"
