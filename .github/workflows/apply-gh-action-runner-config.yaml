@@ -37,8 +37,8 @@ jobs:
       - name: Create hosts.ini
         id: created_hosts_ini
         run: |
-          echo "RUN_ANSBILE = $($(echo "$(terraform output -json vm_ips)" | jq -e 'length > 0' \
-          && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini)) >> "$GITHUB_OUTPUT"
+          echo "RUN_ANSBILE = $($(echo '$(terraform output -json vm_ips)' | jq -e 'length > 0' \
+          && echo '$(terraform output -json vm_ips)' | jq -r '[]' >> ../ansible/hosts.ini))" >> "$GITHUB_OUTPUT"
 
       - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
         run: terraform destroy --auto-approve 1> /dev/null
