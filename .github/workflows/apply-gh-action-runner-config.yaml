@@ -11,8 +11,8 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
     outputs:
-      RUN_ANSIBLE_OUTPUT: ${{steps.check_hosts.outputs.RUN_ANSIBLE}}
-      RUN_ANSIBLE_TEST: ${{ steps.check_hosts.outputs.RUN_ANSIBLE_TEST}}
+      run-ansible-output: ${{ steps.check_hosts.outputs.run-ansible }}
+      run-ansible-output-test: ${{ steps.check_hosts.outputs.run-ansible-test }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -38,8 +38,8 @@ jobs:
       - name: Check length of VM List
         id: check_hosts
         run: |
-          echo "RUN_ANSBILE=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
-          && echo "RUN_ANSIBLE_TEST=THIS_IS_A_TEST" >> "GITHUB_OUTPUT"
+          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
+          && echo "run-ansible-test=THIS_IS_A_TEST" >> "GITHUB_OUTPUT"
           
       
       - name: Create hosts.ini
@@ -53,8 +53,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: apply-terraform
     env:
-      RUN_ANSIBLE_OUTPUT: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_OUTPUT }}
-      RUN_ANSIBLE_TEST: ${{ needs.apply-terraform.outputs.RUN_ANSIBLE_TEST }}
+      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible }}
+      RUN_ANSIBLE_TEST: ${{ needs.apply-terraform.outputs.run-ansible-test }}
       TEST: "This is another test"
     steps:
       - name: test
