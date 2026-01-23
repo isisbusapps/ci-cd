@@ -45,9 +45,9 @@ jobs:
   test-output:
     runs-on: ubuntu-latest
     needs: apply-terraform
+    env:
+      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible}}
     steps:
-      - env:
-          RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible}}
       - name: test
         run: |
           echo ${RUN_ANSIBLE}
