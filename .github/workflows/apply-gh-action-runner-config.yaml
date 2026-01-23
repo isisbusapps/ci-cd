@@ -40,7 +40,7 @@ jobs:
           && echo "$(terraform output -json vm_ips)" | jq -r '[]' >> ../ansible/hosts.ini) >> "$GITHUB_OUTPUT"
 
       - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
-        run: terraform destroy --auto-approve tfplan 1> /dev/null
+        run: terraform destroy --auto-approve 1> /dev/null
   
   test-output:
     runs-on: ubuntu-latest
