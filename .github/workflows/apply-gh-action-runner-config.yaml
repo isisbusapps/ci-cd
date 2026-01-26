@@ -7,11 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: self-hosted-gh-runners/terraform
+        working-directory: self-hosted-gh-runners/static/terraform
+    outputs:
+      run-ansible: ${{ steps.check-vms.outputs.run-ansible }}
+      vm-ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
-    outputs:
-      run-ansible: ${{ steps.check_hosts.outputs.run-ansible }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -35,30 +36,48 @@ jobs:
         run: terraform apply -auto-approve tfplan 1> /dev/null
 
       - name: Check length of VM List
-        id: check_hosts
+        id: check-vms
         run: |
-          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT"
-          
+          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
+          && echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
+          && export VM_IPS=$(echo $(terraform output -json vm_ips) | jq -r '.[]')
+
+      - name: Connect to STFC RAL VPN
+      # Connect to STFC VPN
+
+      - name: Setup SSH
+        run: |
+          service ssh status
+          eval `ssh-agent -s`
+          mkdir -p /home/runner/.ssh/
+          touch /home/runner/.ssh/config
+          touch /home/runner/.ssh/id_rsa
+          echo -e "${{ secrets.FASE_SSH_KEY }}" > /home/runner/.ssh/id_rsa
+          chmod 700 /home/runner/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.VM_IPS }} >> /home/ubuntu/.ssh/known_hosts
+
+      - name: Run VM setup playbook # Include any environment variables needed
+        run: |
+          ansible-playbook --private-key /home/runner/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_packages.yaml 
+
+      - name: Run GitHub runner setup playbook # Include any environment variables needed
+        run: |
+          ansible-playbook --private-key /home/runner/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_github_actions_runner.yaml
+
+  # apply-ansible:
+  #   needs: apply-terraform
+  #   if: ${{ needs.apply-terraform.outputs.run-ansible }}
+  #   runs-on: ubuntu-lastest
+  #   defaults:
+  #     run:
+  #     working-directory: self-hosted-gh-runners/static/ansible
+  #   env:
+  #     VM_IPS: ${{ needs.apply-terraform.outputs.vm-ips }}
+  #   steps:
+  #     - name: Create hosts.ini
+  #       run: |
+  #         echo ${{ env.VM_IPS }} >> hosts.ini
+
       
-      - name: Create hosts.ini
-        run: |
-          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini
 
-      - name: "!!! DESTROY TERRAFORM WHILE TESTING !!!"
-        run: terraform destroy --auto-approve 1> /dev/null
-  
-  test-output:
-    runs-on: ubuntu-latest
-    needs: apply-terraform
-    env:
-      RUN_ANSIBLE: ${{ needs.apply-terraform.outputs.run-ansible }}
-    steps:
-      - name: test
-        run: |
-          echo "${{ env.RUN_ANSIBLE }}" && echo "${{ env.RUN_ANSBILE_TEST }}" && echo ${{ env.TEST }}
 
-  apply-ansible:
-    if: ${{ $needs.apply-terraform.outputs.run-ansible }}
-    runs-on: ubuntu-lastest
-    needs: apply-terraform
-    steps:
