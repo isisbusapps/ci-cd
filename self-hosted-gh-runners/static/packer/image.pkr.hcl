@@ -16,7 +16,7 @@ source "openstack" "gh_action_runner" {
     cloud = "openstack"
     source_image = var.source_image
     flavor = var.flavor
-    networks = var.network
+    networks = [var.network]
     image_name = var.new_image
     image_visibility = "private"
     metadata = {
