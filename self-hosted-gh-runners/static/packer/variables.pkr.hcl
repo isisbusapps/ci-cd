@@ -7,7 +7,7 @@ variable "source_image_name" {
 }
 
 variable "new_image" {
-    default = env("NEW_IMAGE_NAME")
+    default = env("IMAGE_NAME")
 }
 
 variable "flavor" {

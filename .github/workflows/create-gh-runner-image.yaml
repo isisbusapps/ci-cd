@@ -25,6 +25,12 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
+    - name: Install OpenStack CLI
+      run: |
+        apt update
+        apt install -y python3-pip
+        pip3 install python-openstackclient
+
     - name: Create clouds.yaml
       run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml 
     
