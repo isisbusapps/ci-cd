@@ -27,8 +27,8 @@ jobs:
 
     - name: Install OpenStack CLI
       run: |
-        apt update
-        apt install -y python3-pip
+        sudo apt update
+        sudo apt install -y python3-pip
         pip3 install python-openstackclient
 
     - name: Create clouds.yaml
