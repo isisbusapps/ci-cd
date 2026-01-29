@@ -38,7 +38,7 @@ jobs:
       id: export
       run: |
         echo "Export Base Image ID"
-        echo "base_image_id=$(echo $(openstack image list --name ${{ env.BASE_IMAGE_NAME }} --status 'active' -f json) | jq '.[].ID')" >> "$GITHUB_OUTPUT"
+        echo "base_image_id=$(openstack image show --name ${{ env.BASE_IMAGE_NAME }} --status 'active' -f value -c id)" >> "$GITHUB_OUTPUT"
 
         echo "Export Build VM Flavor ID"
         echo "flavor_id=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
