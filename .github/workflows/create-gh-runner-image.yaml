@@ -15,6 +15,11 @@ jobs:
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
       FLAVOR_NAME: l3.nano
       NETWORK_NAME: Internal
+    
+    outputs:
+      base_image_id: ${{ steps.export.outputs.base_image_id }}
+      flavor_id: ${{ steps.export.outputs.flavor_id }}
+      network_id: ${{ steps.export.outputs.network_id }}
 
     steps:
     - name: Checkout repo
@@ -26,21 +31,14 @@ jobs:
     - name: Export Base Image & Build VM Flavor
       run: |
         echo "Export Base Image ID"
-        echo $(BASE_IMAGE_ID=$(echo $(openstack image list --name "${{ env.BASE_IMAGE_NAME }}" --status "active" -f json) | jq '.[].ID')) >> $GITHUB_ENV
+        echo "base_image_id=$(echo $(openstack image list --name ${{ env.BASE_IMAGE_NAME }} --status 'active' -f json) | jq '.[].ID')" >> $GITHUB_ENV
 
         echo "Export Build VM Flavor ID"
-        echo $(FLAVOR_ID=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)) >> $GITHUB_ENV
+        echo $"flavor_id=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)" >> $GITHUB_ENV
 
         echo "Export Network ID"
-        echo $(NETWORK_ID=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)) >> $GITHUB_ENV
+        echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> $GITHUB_ENV
 
-    - name: Test Export
-      run: |
-        echo "Outputting exported values"
-        echo ${{ env.BASE_IMAGE_ID }}
-        echo ${{ env.FLAVOR_ID }}
-        echo ${{ env.NETWORK_ID }}
-        echo "Outputted Exported Values"
     - name: Setup packer
       uses: hashicorp/setup-packer@main
       with:
@@ -48,12 +46,15 @@ jobs:
 
     - name: Packer Init
       run: packer init .
-    
-    - name: Packer Validate
-      run: packer validate .
 
-    - name: Packer Build
-      run: packer build .
+    - name: Packer Validate & Build
+      env:
+        BASE_IMAGE_ID: ${{ steps.export.outputs.base_image_id }}
+        FLAVOR_ID: ${{ steps.export.outputs.flavor_id }}
+        NETWORK_ID: ${{ steps.export.outputs.network_id }}
+      run: |
+        packer validate .
+        packer build .
 
     - name: Delete old images
       run: ./scripts/delete_old_images.sh
