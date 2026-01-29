@@ -60,6 +60,9 @@ jobs:
         FLAVOR_ID: ${{ steps.export.outputs.flavor_id }}
         NETWORK_ID: ${{ steps.export.outputs.network_id }}
       run: |
+        echo $BASE_IMAGE_ID
+        echo $FLAVOR_ID
+        echo $NETWORK_ID
         packer validate .
         packer build .
 
