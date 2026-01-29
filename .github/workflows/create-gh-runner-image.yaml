@@ -39,7 +39,7 @@ jobs:
         echo "Outputting exported values"
         echo ${{ env.BASE_IMAGE_ID }}
         echo ${{ env.FLAVOR_ID }}
-        echo ${{ NETWORK_ID }}
+        echo ${{ env.NETWORK_ID }}
         echo "Outputted Exported Values"
     - name: Setup packer
       uses: hashicorp/setup-packer@main
