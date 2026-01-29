@@ -1,6 +1,7 @@
 name: create-gh-action-runner-image.yaml
 on: 
   workflow-dispatch:
+  push:
 
 jobs:
   packer:
