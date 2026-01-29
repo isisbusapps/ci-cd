@@ -14,14 +14,14 @@ packer {
 source "openstack" "gh_action_runner" {
     ssh_username = "ubuntu"
     cloud = "openstack"
-    source_image = env("BASE_IMAGE_ID")
-    flavor = env("FLAVOR_ID")
-    networks = [env("NETWORK_ID")]
-    image_name = env("IMAGE_NAME")
+    source_image = var.source_image
+    flavor = var.flavor
+    networks = var.network
+    image_name = var.new_image
     image_visibility = "private"
     metadata = {
         built_by = "packer"
-        base =env("BASE_IMAGE_NAME")
+        base = var.source_image_name
     }
 }
 
