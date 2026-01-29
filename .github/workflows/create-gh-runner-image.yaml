@@ -9,7 +9,7 @@ jobs:
       run: 
         working-directory: self-hosted-gh-runners/static/packer
     env:
-      OS_CLINET_CONFIG_FILE: ${{ github.workspace/clouds.yaml }}
+      OS_CLINET_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       OS_CLOUD: openstack
       IMAGE_NAME: gh-action-runner-image
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
