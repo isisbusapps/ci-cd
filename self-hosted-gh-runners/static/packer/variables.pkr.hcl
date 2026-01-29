@@ -15,5 +15,5 @@ variable "flavor" {
 }
 
 variable "network" {
-    default = env("NETWORK_ID")
+    default = "[${{env("NETWORK_ID")}}]"
 }
