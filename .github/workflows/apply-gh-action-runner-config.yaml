@@ -13,6 +13,8 @@ jobs:
       vm-ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
+      IMAGE_NAME: gh-action-runner-image
+      FLAVOR_NAME: l3.nano
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

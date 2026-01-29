@@ -3,12 +3,12 @@ provider "openstack" {
 }
 
 data "openstack_images_image_ids_v2" "images" {
-    name = "ubuntu-noble-24.04-nogui"
+    name = env("IMAGE_NAME")
     sort = "updated_at"
 }
 
 data "openstack_compute_flavor_v2" "l3nano" {
-    name = "l3.nano"
+    name = env("FLAVOR_NAME")
 }
 
 resource "openstack_compute_instance_v2" "basic" {
