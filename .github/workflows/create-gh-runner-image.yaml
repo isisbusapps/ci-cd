@@ -31,13 +31,13 @@ jobs:
     - name: Export Base Image & Build VM Flavor
       run: |
         echo "Export Base Image ID"
-        echo "base_image_id=$(echo $(openstack image list --name ${{ env.BASE_IMAGE_NAME }} --status 'active' -f json) | jq '.[].ID')" >> $GITHUB_OUTPUT
+        echo "base_image_id=$(echo $(openstack image list --name ${{ env.BASE_IMAGE_NAME }} --status 'active' -f json) | jq '.[].ID')" >> "$GITHUB_OUTPUT"
 
         echo "Export Build VM Flavor ID"
-        echo $"flavor_id=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)" >> $GITHUB_OUTPUT
+        echo $"flavor_id=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
         echo "Export Network ID"
-        echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> $GITHUB_OUTPUT
+        echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
     - name: Setup packer
       uses: hashicorp/setup-packer@main
