@@ -9,45 +9,45 @@ jobs:
     defaults:
       run: 
         working-directory: self-hosted-gh-runners/static/packer
-      env:
-        OS_CLINET_CONFIG_FILE: ${{ github.workspace/clouds.yaml }}
-        OS_CLOUD: openstack
-        IMAGE_NAME: gh-action-runner-image
-        BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
-        FLAVOR_NAME: l3.nano
-        NETWORK_NAME: Internal
+    env:
+      OS_CLINET_CONFIG_FILE: ${{ github.workspace/clouds.yaml }}
+      OS_CLOUD: openstack
+      IMAGE_NAME: gh-action-runner-image
+      BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
+      FLAVOR_NAME: l3.nano
+      NETWORK_NAME: Internal
 
-      steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Create clouds.yaml
-        run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml 
-      
-      - name: Export Base Image & Build VM Flavor
-        run: |
-          echo "Export Base Image ID"
-          export IMAGE_ID=$(echo $(openstack image list --name "${{ env.BASE_IMAGE_NAME }}" --status "active" -f json) | jq '.[].ID')
+    - name: Create clouds.yaml
+      run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml 
+    
+    - name: Export Base Image & Build VM Flavor
+      run: |
+        echo "Export Base Image ID"
+        export IMAGE_ID=$(echo $(openstack image list --name "${{ env.BASE_IMAGE_NAME }}" --status "active" -f json) | jq '.[].ID')
 
-          echo "Export Build VM Flavor ID"
-          export FLAVOR_ID=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)
+        echo "Export Build VM Flavor ID"
+        export FLAVOR_ID=$(openstack flavor show ${{ env.FLAVOR_NAME }} -f value -c id)
 
-          echo "Export Network ID"
-          export NETWORK_ID=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)
+        echo "Export Network ID"
+        export NETWORK_ID=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)
 
-      - name: Setup packer
-        uses: hashicorp/setup-packer@main
-        with:
-          version: latest
+    - name: Setup packer
+      uses: hashicorp/setup-packer@main
+      with:
+        version: latest
 
-      - name: Packer Init
-        run: packer init .
-      
-      - name: Packer Validate
-        run: packer validate .
+    - name: Packer Init
+      run: packer init .
+    
+    - name: Packer Validate
+      run: packer validate .
 
-      - name: Packer Build
-        run: packer build .
+    - name: Packer Build
+      run: packer build .
 
-      - name: Delete old images
-        run: ./scripts/delete_old_images.sh
+    - name: Delete old images
+      run: ./scripts/delete_old_images.sh
