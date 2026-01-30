@@ -22,3 +22,8 @@ variable "network" {
     type = string
     default = env("NETWORK_ID")
 }
+
+variable "floating_ip" {
+    type = string
+    default = env("PACKER_FLOATING_IP")
+}
