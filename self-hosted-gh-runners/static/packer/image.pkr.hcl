@@ -17,12 +17,13 @@ source "openstack" "gh_action_runner" {
     source_image = var.source_image
     flavor = var.flavor
     networks = [var.network]
-    floating_ip = var.floating_ip
     image_name = var.new_image
     image_visibility = "private"
     metadata = {
         built_by = "packer"
         base = var.source_image_name
+        team = "ua-ci-cd"
+        usage = "Self Hosted GH Action Runners"
     }
 }
 
@@ -30,11 +31,17 @@ build {
     name = "openstack-image-build"
     sources = ["source.openstack.gh_action_runner"]
 
+    provisioner "file" {
+        source = "scripts/configure.sh"
+        destination = "~/configure.sh"
+    }
+
     provisioner "shell" {
         script = "scripts/install_ansible.sh"
     }
 
     provisioner "ansible-local" {
-        playbook_file = "playbooks/install_packages.yaml"
-    }
+        playbook_file = "playbooks/install_dependencies.yaml"
+        extra_arguments = ["--extra-vars", "RUNNER_VERSION=${var.runner_version}"]
+    }  
 }

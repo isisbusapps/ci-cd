@@ -9,18 +9,21 @@ jobs:
       run: 
         working-directory: self-hosted-gh-runners/static/packer
     env:
-      OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       OS_CLOUD: openstack
       IMAGE_NAME: gh-action-runner-image
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
       FLAVOR_NAME: l3.nano
-      NETWORK_NAME: Internal
-      PACKER_FLOATING_IP: ${{ secrets.PACKER_FLOATING_IP }}
+      NETWORK_NAME: ua-ci-cd
+      FLOATING_IP: ${{ secrets.FLOATING_IP }}
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
+      GITHUB_ORG: ${{ github.repository_owner }}
     
     outputs:
       base_image_id: ${{ steps.export.outputs.base_image_id }}
       flavor_id: ${{ steps.export.outputs.flavor_id }}
       network_id: ${{ steps.export.outputs.network_id }}
+      runner_version: ${{ steps.get-runner-version.outputs.runner-version }}
 
     steps:
     - name: Checkout repo
@@ -47,6 +50,12 @@ jobs:
         echo "Export Network ID"
         echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
+    - name: Get Latest Runner version
+      id: get-runner-version
+      run: |
+        echo "Get Latest Runner Version"
+        echo "runner_version=$($(curl -s https://api.github.com/repos/actions/runner/releases/latest | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/'))" >> "$GITHUB_OUTPUT"
+
     - name: Setup packer
       uses: hashicorp/setup-packer@main
       with:
@@ -60,6 +69,7 @@ jobs:
         BASE_IMAGE_ID: ${{ steps.export.outputs.base_image_id }}
         FLAVOR_ID: ${{ steps.export.outputs.flavor_id }}
         NETWORK_ID: ${{ steps.export.outputs.network_id }}
+        RUNNER_VERSION: ${{ steps.get-runner-version.outputs.runner_version }}
       run: |
         packer validate .
         packer build .

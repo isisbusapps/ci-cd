@@ -23,7 +23,7 @@ variable "network" {
     default = env("NETWORK_ID")
 }
 
-variable "floating_ip" {
+variable "runner_version" {
     type = string
-    default = env("PACKER_FLOATING_IP")
+    default = env("RUNNER_VERSION")
 }

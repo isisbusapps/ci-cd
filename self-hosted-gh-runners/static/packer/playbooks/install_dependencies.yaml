@@ -28,3 +28,19 @@
         name: ubuntu
         groups: docker
         append: yes
+
+    - name: Create Runner DIR
+      ansible.builtin.file:
+        path: /home/ubuntu/actions-runner
+        state: directory
+
+    - name: Extract Runner
+      ansible.builtin.unarchive:
+        src: https://github.com/actions/runner/releases/download/v{{RUNNER_VERSION}}/actions-runner-linux-x64-{{RUNNER_VERSION}}.tar.gz
+        dest: ~/actions-runner
+        remote_src: yes
+    
+    - name: Install dependencies
+      ansible.builtin.shell:
+        chdir: ~/actions-runner
+        cmd: sudo ./bin/installdependencies.sh

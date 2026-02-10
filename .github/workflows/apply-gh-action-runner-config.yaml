@@ -44,9 +44,6 @@ jobs:
           && echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
           && export VM_IPS=$(echo $(terraform output -json vm_ips) | jq -r '.[]')
 
-      - name: Connect to STFC RAL VPN
-      # Connect to STFC VPN
-
       - name: Setup SSH
         run: |
           service ssh status
@@ -65,21 +62,6 @@ jobs:
       - name: Run GitHub runner setup playbook # Include any environment variables needed
         run: |
           ansible-playbook --private-key /home/runner/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_github_actions_runner.yaml
-
-  # apply-ansible:
-  #   needs: apply-terraform
-  #   if: ${{ needs.apply-terraform.outputs.run-ansible }}
-  #   runs-on: ubuntu-lastest
-  #   defaults:
-  #     run:
-  #     working-directory: self-hosted-gh-runners/static/ansible
-  #   env:
-  #     VM_IPS: ${{ needs.apply-terraform.outputs.vm-ips }}
-  #   steps:
-  #     - name: Create hosts.ini
-  #       run: |
-  #         echo ${{ env.VM_IPS }} >> hosts.ini
-
       
 
 
