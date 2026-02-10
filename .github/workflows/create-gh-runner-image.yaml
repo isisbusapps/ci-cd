@@ -10,11 +10,11 @@ jobs:
         working-directory: self-hosted-gh-runners/static/packer
     env:
       OS_CLOUD: openstack
-      IMAGE_NAME: gh-action-runner-image
+      IMAGE_NAME: gh-action-runner-image-builder
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
       FLAVOR_NAME: l3.nano
       NETWORK_NAME: ua-ci-cd
-      FLOATING_IP: ${{ secrets.FLOATING_IP }}
+      FLOATING_IP: ${{ secrets.PACKER_FLOATING_IP }}
       ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       GITHUB_ORG: ${{ github.repository_owner }}
