@@ -17,6 +17,7 @@ source "openstack" "gh_action_runner" {
     source_image = var.source_image
     flavor = var.flavor
     networks = [var.network]
+    floating_ip = var.floating_ip
     image_name = var.new_image
     image_visibility = "private"
     metadata = {

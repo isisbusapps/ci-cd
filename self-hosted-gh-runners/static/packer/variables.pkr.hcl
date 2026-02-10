@@ -27,3 +27,8 @@ variable "runner_version" {
     type = string
     default = env("RUNNER_VERSION")
 }
+
+variable "floating_ip" {
+    type = string
+    default = env("FLOATING_IP")
+}
