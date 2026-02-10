@@ -13,6 +13,7 @@ packer {
 
 source "openstack" "gh_action_runner" {
     ssh_username = "ubuntu"
+    ssh_interface = "public_ip"
     cloud = "openstack"
     source_image = var.source_image
     flavor = var.flavor
