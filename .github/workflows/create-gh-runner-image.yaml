@@ -52,7 +52,7 @@ jobs:
         echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
         echo "Export Floating IP ID"
-        echo "network_id=$(openstack floating ip show ${{ env.FLOATING_IP }} -f value -c id)" >> "$GITHUB_OUTPUT"
+        echo "floating_ip_id=$(openstack floating ip show ${{ env.FLOATING_IP }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
     - name: Get Latest Runner version
       id: get-runner-version
