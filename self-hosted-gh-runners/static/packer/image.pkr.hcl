@@ -11,9 +11,8 @@ packer {
     }
 }
 
-source "openstack" "gh_action_runner" {
+source "openstack" "gh_action_runner_image" {
     ssh_username = "ubuntu"
-    ssh_interface = "public_ip"
     cloud = "openstack"
     source_image = var.source_image
     flavor = var.flavor
@@ -31,7 +30,7 @@ source "openstack" "gh_action_runner" {
 
 build {
     name = "openstack-image-build"
-    sources = ["source.openstack.gh_action_runner"]
+    sources = ["source.openstack.gh_action_runner_image"]
 
     provisioner "file" {
         source = "scripts/configure.sh"

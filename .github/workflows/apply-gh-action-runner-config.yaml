@@ -15,6 +15,7 @@ jobs:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       IMAGE_NAME: gh-action-runner-image
       FLAVOR_NAME: l3.nano
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
