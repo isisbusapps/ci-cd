@@ -30,5 +30,5 @@ variable "runner_version" {
 
 variable "floating_ip" {
     type = string
-    default = env("FLOATING_IP")
+    default = env("FLOATING_IP_ID")
 }

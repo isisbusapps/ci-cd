@@ -23,6 +23,7 @@ jobs:
       base_image_id: ${{ steps.export.outputs.base_image_id }}
       flavor_id: ${{ steps.export.outputs.flavor_id }}
       network_id: ${{ steps.export.outputs.network_id }}
+      floating_ip_id: ${{ steps.export.outputs.floating_ip_id }}
       runner_version: ${{ steps.get-runner-version.outputs.runner-version }}
 
     steps:
@@ -38,7 +39,7 @@ jobs:
     - name: Create clouds.yaml
       run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml 
     
-    - name: Export Base Image & Build VM Flavor
+    - name: Export Base Image, Build VM Flavor, Network & Floating IP IDs
       id: export
       run: |
         echo "Export Base Image ID"
@@ -49,6 +50,9 @@ jobs:
 
         echo "Export Network ID"
         echo "network_id=$(openstack network show ${{ env.NETWORK_NAME }} -f value -c id)" >> "$GITHUB_OUTPUT"
+
+        echo "Export Floating IP ID"
+        echo "network_id=$(openstack floating ip show ${{ env.FLOATING_IP }} -f value -c id)" >> "$GITHUB_OUTPUT"
 
     - name: Get Latest Runner version
       id: get-runner-version
@@ -69,6 +73,7 @@ jobs:
         BASE_IMAGE_ID: ${{ steps.export.outputs.base_image_id }}
         FLAVOR_ID: ${{ steps.export.outputs.flavor_id }}
         NETWORK_ID: ${{ steps.export.outputs.network_id }}
+        FLOATING_IP_ID: ${{ steps.export.outputs.floating_ip_id }}
         RUNNER_VERSION: ${{ steps.get-runner-version.outputs.runner_version }}
       run: |
         packer validate .
