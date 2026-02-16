@@ -57,7 +57,7 @@ jobs:
       id: get-runner-version
       run: |
         echo "Get Latest Runner Version"
-        echo "runner_version=$($(curl -s https://api.github.com/repos/actions/runner/releases/latest | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/'))" >> "$GITHUB_OUTPUT"
+        echo "runner_version=$(curl -s https://api.github.com/repos/actions/runner/releases/latest | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')" >> "$GITHUB_OUTPUT"
 
     - name: Setup packer
       uses: hashicorp/setup-packer@main

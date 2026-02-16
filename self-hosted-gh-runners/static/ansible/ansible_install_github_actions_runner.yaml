@@ -1,37 +1,31 @@
-- name: Install dependencies
-  hosts: runnerServer
+- name: Register & Start Runner
+  hosts: servers
   remote_user: ubuntu
 
   tasks:
-    - name: Download GitHub Self-Hosted runner
-      ansible.builtin.get_url:
-        url: https://github.com/actions/runner/releases/download/v{{RUNNER_VERSION}}/actions-runner-linux-x64-{{RUNNER_VERSION}}.tar.gz
-        dest: /home/ubuntu/FASE/actions-runner/actions-runner-linux-x64-{{RUNNER_VERSION}}.tar.gz
-
     - name: Change File Permissions
       ansible.builtin.file:
-        path: /home/ubuntu/FASE/actions-runner/expect_start.sh
+        path: /home/ubuntu/actions-runner/expect_start.sh
         state: touch
         mode: u=rwx,g=r,o=r
     
     - name: Change File Permissions
       ansible.builtin.file:
-        path: /home/ubuntu/FASE/actions-runner/configure.sh
+        path: /home/ubuntu/configure.sh
         state: touch
         mode: u=rwx,g=r,o=r
 
     - name: Extract & Configure the runner
       ansible.builtin.command:
         argv:
-          - /home/ubuntu/FASE/actions-runner/configure.sh
+          - /home/ubuntu/scripts/configure.sh
           - "{{ACCESS_TOKEN}}"
           - "{{ORG}}"
-          - "{{RUNNER_VERSION}}"
 
     - name: Install Runner Service
       become: true
       ansible.builtin.command:
-        chdir: /home/ubuntu/FASE/actions-runner/
+        chdir: /home/ubuntu/actions-runner/
         argv:
           - ./svc.sh
           - install
@@ -39,7 +33,7 @@
     - name: Start Runner Service
       become: true
       ansible.builtin.command:
-        chdir: /home/ubuntu/FASE/actions-runner/
+        chdir: /home/ubuntu/actions-runner/
         argv:
           - ./svc.sh
           - start

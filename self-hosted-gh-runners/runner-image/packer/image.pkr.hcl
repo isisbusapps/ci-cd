@@ -33,12 +33,12 @@ build {
     sources = ["source.openstack.gh_action_runner_image"]
 
     provisioner "file" {
-        source = "scripts/configure.sh"
-        destination = "~/configure.sh"
+        sources = ["scripts/configure.sh", "scripts/docker_prune.sh", "scripts/job_started.sh", "scripts/job_completed.sh", "scripts/remove.sh"]
+        destination = "~/scripts/"
     }
 
     provisioner "shell" {
-        script = "scripts/install_ansible.sh"
+        script = "scripts/setup_vm.sh"
     }
 
     provisioner "ansible-local" {
