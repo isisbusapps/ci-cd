@@ -6,4 +6,4 @@ terraform.*
 *.terraform*
 
 # Ignore Ansible hosts.ini
-# hosts.ini
+hosts.ini
