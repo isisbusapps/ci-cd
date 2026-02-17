@@ -1,0 +1,74 @@
+name: apply-sh-gh-runner-config
+on: 
+  workflow-dispatch:
+
+jobs:
+  apply-terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: self-hosted-gh-runners/static/terraform
+    outputs:
+      vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
+    env:
+      OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
+      IMAGE_NAME: gh-action-runner-image
+      FLAVOR_NAME: l3.nano
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create clouds.yaml
+        run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml
+      
+      - name: Get terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="hosts" "hosts" >> ../ansible/hosts.ini
+
+      - name: Setup SSH
+        env:
+          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
+        run: |
+          service ssh status
+          eval `ssh-agent -s`
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/config
+          touch ~/.ssh/id_rsa
+          echo -e "${{ secrets.FASE_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.VM_IPS }} >> ~/.ssh/known_hosts
+
+      - name: Run VM setup playbook # Include any environment variables needed
+        run: |
+          ansible-playbook --private-key ~/.ssh/id_rsa -i ../ansible/hosts.ini ../ansible/ansible_install_packages.yaml 
+
+      - name: Run GitHub runner setup playbook # Include any environment variables needed
+        run: |
+          ansible-playbook --private-key ~/.ssh/id_rsa -i ../ansible/hosts.ini ../ansible/destroy-gh-action-runners.yaml --extra-vars ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} --extra-vars ORG=${{ github.repository_owner }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+          terraform_wrapper: false
+      
+      - name: Get terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="tfstate" "tfstate" > terraform.tfstate
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform destroy
+        run: terraform destroy -auto-approve 1> /dev/null
+
+      - name: Put terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
+      
+
+
