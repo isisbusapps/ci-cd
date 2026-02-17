@@ -25,7 +25,7 @@ jobs:
       - name: Get terraform.tfstate
         run: |
           vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="hosts" "hosts" >> ../ansible/hosts.ini
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="hosts" "hosts" >> ../ansible/hosts.txt
 
       - name: Setup SSH
         env:
@@ -38,7 +38,10 @@ jobs:
           touch ~/.ssh/id_rsa
           echo -e "${{ secrets.FASE_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ env.VM_IPS }} >> ~/.ssh/known_hosts
+          echo [servers] > ../ansible/hosts.ini
+          cat hosts.txt >> ../ansible/hosts.ini
+          sed -i '$!s/$/,/' ../ansible/hosts.txt
+          ssh-keyscan -f ../ansible/hosts.txt >> ~/.ssh/known_hosts
 
       - name: Run VM setup playbook # Include any environment variables needed
         run: |
