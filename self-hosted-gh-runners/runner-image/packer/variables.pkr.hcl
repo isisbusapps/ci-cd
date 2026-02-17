@@ -3,11 +3,6 @@ variable "source_image" {
     default = env("BASE_IMAGE_ID")
 }
 
-variable "source_image_name" {
-    type = string
-    default = env("BASE_IMAGE_NAME")
-}
-
 variable "new_image" {
     type = string
     default = env("IMAGE_NAME")

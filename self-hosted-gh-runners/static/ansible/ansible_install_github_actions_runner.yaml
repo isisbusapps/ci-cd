@@ -18,7 +18,7 @@
     - name: Extract & Configure the runner
       ansible.builtin.command:
         argv:
-          - /home/ubuntu/scripts/configure.sh
+          - /home/ubuntu/configure.sh
           - "{{ACCESS_TOKEN}}"
           - "{{ORG}}"
 

@@ -22,7 +22,6 @@ source "openstack" "gh_action_runner_image" {
     image_visibility = "private"
     metadata = {
         built_by = "packer"
-        base = var.source_image_name
         team = "ua-ci-cd"
         usage = "Self Hosted GH Action Runners"
     }
@@ -34,7 +33,7 @@ build {
 
     provisioner "file" {
         sources = ["scripts/configure.sh", "scripts/docker_prune.sh", "scripts/job_started.sh", "scripts/job_completed.sh", "scripts/remove.sh"]
-        destination = "~/scripts/"
+        destination = "~/"
     }
 
     provisioner "shell" {

@@ -7,15 +7,15 @@ sudo apt-get install -y ansible
 
 ansible --version 
 
-sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/home/ubunutu/scripts/job_started.sh >> /etc/environment"
-sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/home/ubuntu/scripts/job_completed.sh >> /etc/environment"
+sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/home/ubunutu/job_started.sh >> /etc/environment"
+sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/home/ubuntu/job_completed.sh >> /etc/environment"
 
 sudo chmod +x ~/job_started.sh
 sudo chmod +x ~/job_completed.sh
 sudo chown ubuntu:ubuntu ~/job_started.sh
 sudo chown ubuntu:ubuntu ~/job_completed.sh
 
-sudo cp ~/scripts/docker_prune.sh /etc/cron.daily/docker_prune.sh
+sudo cp ~/docker_prune.sh /etc/cron.daily/docker_prune.sh
 sudo chmod +x /etc/cron.daily/docker_prune.sh
 
 sudo mkdir ~/actions-runner
