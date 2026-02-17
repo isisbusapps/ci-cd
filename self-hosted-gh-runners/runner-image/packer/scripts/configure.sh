@@ -12,5 +12,7 @@ REG_TOKEN=$(curl -L -X POST \
             https://api.github.com/orgs/${ORG}/actions/runners/registration-token \
             | jq .token --raw-output)
 
+RUNER_NAME=$(hostname)
+
 cd /home/ubuntu/actions-runner
-./config.sh --url https://github.com/${ORG} --token ${REG_TOKEN} --name UA-Runners --unattended
+./config.sh --url https://github.com/${ORG} --token ${REG_TOKEN} --name ${RUNNER_NAME} --unattended

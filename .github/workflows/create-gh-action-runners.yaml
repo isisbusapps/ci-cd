@@ -9,8 +9,7 @@ jobs:
       run:
         working-directory: self-hosted-gh-runners/static/terraform
     outputs:
-      run-ansible: ${{ steps.check-vms.outputs.run-ansible }}
-      vm-ips: ${{ steps.check-vms.outputs.vm-ips }}
+      vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       IMAGE_NAME: gh-action-runner-image
@@ -41,11 +40,12 @@ jobs:
       - name: Check length of VM List
         id: check-vms
         run: |
-          echo "run-ansible=$(echo $(terraform output -json vm_ips) | jq -e 'length > 0')" >> "$GITHUB_OUTPUT" \
-          && echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
-          && export VM_IPS=$(echo $(terraform output -json vm_ips) | jq -r '.[]')
+          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
+          && echo "vm_ips=$(echo $(terraform output -json vm_ips) | jq -r '.[]')" >> $GITHUB_OUTPUT
 
       - name: Setup SSH
+        env:
+          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
         run: |
           service ssh status
           eval `ssh-agent -s`
