@@ -3,7 +3,7 @@ provider "openstack" {
 }
 
 data "openstack_images_image_ids_v2" "images" {
-    name = var.image_name
+    name = "github-action-runner-image"
     sort = "updated_at"
 }
 

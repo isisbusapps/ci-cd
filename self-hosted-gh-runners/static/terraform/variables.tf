@@ -1,8 +1,3 @@
-variable "image_name" {
-    type = string
-    default = "gh-action-runner-image"
-}
-
 variable "flavor_name" {
     type = string
     default = "l3.nano"
