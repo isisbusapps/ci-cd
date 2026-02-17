@@ -28,6 +28,11 @@ jobs:
           terraform_version: 1.14.3
           terraform_wrapper: false
 
+      - name: Get terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="tfstate" "tfstate" > terraform.tfstate
+
       - name: Terraform init
         run: terraform init
 
@@ -37,11 +42,16 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan 1> /dev/null
 
-      - name: Check length of VM List
+      - name: Create hosts.ini & Crete list of IPs
         id: check-vms
         run: |
           echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
           && echo "vm_ips=$(echo $(terraform output -json vm_ips) | jq -r '.[]')" >> $GITHUB_OUTPUT
+
+      - name: Put terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
 
       - name: Setup SSH
         env:
@@ -49,20 +59,20 @@ jobs:
         run: |
           service ssh status
           eval `ssh-agent -s`
-          mkdir -p /home/runner/.ssh/
-          touch /home/runner/.ssh/config
-          touch /home/runner/.ssh/id_rsa
-          echo -e "${{ secrets.FASE_SSH_KEY }}" > /home/runner/.ssh/id_rsa
-          chmod 700 /home/runner/.ssh/id_rsa
-          ssh-keyscan -H ${{ env.VM_IPS }} >> /home/ubuntu/.ssh/known_hosts
-
-      - name: Run VM setup playbook # Include any environment variables needed
-        run: |
-          ansible-playbook --private-key /home/runner/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_packages.yaml 
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/config
+          touch ~/.ssh/id_rsa
+          echo -e "${{ secrets.FASE_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.VM_IPS }} >> ~/.ssh/known_hosts
 
       - name: Run GitHub runner setup playbook # Include any environment variables needed
         run: |
-          ansible-playbook --private-key /home/runner/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_github_actions_runner.yaml
+          ansible-playbook --private-key ~/.ssh/id_rsa -u ${{ secrets.ANSIBLE_DEPLOY_USER }} -i ../ansible/hosts.ini ../ansible/ansible_install_github_actions_runner.yaml
+
+      - name: Put hosts.ini
+        run: |
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "hosts" hosts="@../ansible/hosts.ini"
       
 
 
