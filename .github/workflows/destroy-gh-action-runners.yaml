@@ -12,12 +12,10 @@ jobs:
       vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
-      IMAGE_NAME: gh-action-runner-image
-      FLAVOR_NAME: l3.nano
       ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create clouds.yaml
         run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml
@@ -30,26 +28,31 @@ jobs:
       - name: Setup SSH
         env:
           VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
+          FASE_SSH_KEY: ${{ secrets.FASE_SSH_KEY}}
         run: |
-          service ssh status
-          eval `ssh-agent -s`
           mkdir -p ~/.ssh/
-          touch ~/.ssh/config
-          touch ~/.ssh/id_rsa
-          echo -e "${{ secrets.FASE_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
-          echo [servers] > ../ansible/hosts.ini
-          cat hosts.txt >> ../ansible/hosts.ini
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+          echo "$VM_IPS" >> ../ansible/hosts.txt
           sed -i '$!s/$/,/' ../ansible/hosts.txt
           ssh-keyscan -f ../ansible/hosts.txt >> ~/.ssh/known_hosts
 
-      - name: Run VM setup playbook # Include any environment variables needed
+      - name: Run GitHub runner setup playbook
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          ansible-playbook --private-key ~/.ssh/id_rsa -i ../ansible/hosts.ini ../ansible/ansible_install_packages.yaml 
+          cat > /tmp/extra_vars.yml << EOF
+          ACCESS_TOKEN: "$ACCESS_TOKEN"
+          ORG: "${{ github.repository_owner }}"
+          EOF
 
-      - name: Run GitHub runner setup playbook # Include any environment variables needed
-        run: |
-          ansible-playbook --private-key ~/.ssh/id_rsa -i ../ansible/hosts.ini ../ansible/destroy-gh-action-runners.yaml --extra-vars ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} --extra-vars ORG=${{ github.repository_owner }}
+          ansible-playbook \
+          --private-key ~/.ssh/id_rsa \
+          -i ../ansible/hosts.ini \
+          ../ansible/destroy-gh-action-runners.yaml \
+          --extra-vars "@/tmp/extra_vars.yml"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

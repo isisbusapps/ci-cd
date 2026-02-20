@@ -15,7 +15,7 @@
         state: touch
         mode: u=rwx,g=r,o=r
 
-    - name: Extract & Configure the runner
+    - name: Configure the runner
       ansible.builtin.command:
         argv:
           - /home/ubuntu/configure.sh
