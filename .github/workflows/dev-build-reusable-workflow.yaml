@@ -1,0 +1,105 @@
+name: Dev Build and Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        description: 'Short image name, e.g. auth-service'
+        required: true
+        type: string
+      app-name:
+        description: 'Human-readable name for commit messages'
+        required: true
+        type: string
+      gitops-patch-path:
+        description: 'Relative path in gitops repo to dev patch-image.yml'
+        required: true
+        type: string
+      use-dockerhub-mirror:
+        description: 'Use dockerhub.stfc.ac.uk as a Docker Hub pull-through cache'
+        required: false
+        type: boolean
+        default: false
+      registry:
+        required: false
+        type: string
+        default: 'ghcr.io'
+      gitops-repo:
+        required: false
+        type: string
+        default: 'isisbusapps/gitops'
+    secrets:
+      workflow-token:
+        description: 'PAT with repo+workflow scope for the GitOps repo'
+        required: true
+
+jobs:
+  build_and_push:
+    name: Build and Push Container
+    runs-on: self-hosted
+    timeout-minutes: 30
+    permissions:
+      packages: write
+      contents: read
+    outputs:
+      image-digest: ${{ steps.docker_build.outputs.digest }}
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx (with mirror)
+        if: inputs.use-dockerhub-mirror
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["dockerhub.stfc.ac.uk"]
+
+      - name: Set up Docker Buildx
+        if: ${{ !inputs.use-dockerhub-mirror }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  update_gitops:
+    name: Update GitOps Repository
+    runs-on: self-hosted
+    timeout-minutes: 10
+    needs: build_and_push
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.gitops-repo }}
+          token: ${{ secrets.workflow-token }}
+
+      - name: Update image reference
+        uses: mikefarah/yq@v4.48.1
+        with:
+          cmd: |
+            yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+              './${{ inputs.gitops-patch-path }}'
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ github.event.head_commit.url }}"
+          git push

@@ -1,0 +1,211 @@
+name: Build and Prepare Release (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+      app-name:
+        required: true
+        type: string
+      gitops-patch-path:
+        description: 'Relative path in gitops repo to prod patch-image.yml'
+        required: true
+        type: string
+      release-version:
+        description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
+        required: true
+        type: string
+      is-hotfix:
+        required: false
+        type: boolean
+        default: false
+      use-dockerhub-mirror:
+        required: false
+        type: boolean
+        default: false
+      registry:
+        required: false
+        type: string
+        default: 'ghcr.io'
+      gitops-repo:
+        required: false
+        type: string
+        default: 'isisbusapps/gitops'
+    secrets:
+      workflow-token:
+        required: true
+
+jobs:
+  build_and_push:
+    name: Build and Push Container
+    runs-on: self-hosted
+    timeout-minutes: 30
+    permissions:
+      packages: write
+      contents: read
+    outputs:
+      image-digest: ${{ steps.docker_build.outputs.digest }}
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx (with mirror)
+        if: inputs.use-dockerhub-mirror
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["dockerhub.stfc.ac.uk"]
+
+      - name: Set up Docker Buildx
+        if: ${{ !inputs.use-dockerhub-mirror }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.release-version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  update_gitops:
+    name: Update GitOps Repository
+    runs-on: self-hosted
+    timeout-minutes: 10
+    needs: build_and_push
+    outputs:
+      branch-name: ${{ steps.branch.outputs.name }}
+    steps:
+      - name: Generate branch name
+        id: branch
+        run: |
+          BRANCH_NAME="release/${{ github.repository_owner }}/${{ inputs.image-name }}-${{ inputs.release-version }}"
+          echo "name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.gitops-repo }}
+          token: ${{ secrets.workflow-token }}
+
+      - name: Update version comment
+        run: |
+          sed -i 's/# version: .*/# version: ${{ inputs.release-version }}/' './${{ inputs.gitops-patch-path }}'
+
+      - name: Update image reference
+        uses: mikefarah/yq@v4.48.1
+        with:
+          cmd: |
+            yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+              './${{ inputs.gitops-patch-path }}'
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git checkout -b "${{ steps.branch.outputs.name }}"
+          git commit -am "[CD] Release ${{ inputs.app-name }} ${{ inputs.release-version }}"
+          git push --set-upstream origin "${{ steps.branch.outputs.name }}"
+
+  trigger_pr:
+    name: Trigger PR Creation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: update_gitops
+    steps:
+      - name: Trigger GitOps PR workflow
+        env:
+          GH_TOKEN: ${{ secrets.workflow-token }}
+        run: |
+          gh workflow run create-release-pr.yaml \
+            --repo "${{ inputs.gitops-repo }}" \
+            --field branchName="${{ needs.update_gitops.outputs.branch-name }}" \
+            --field releaseVersion="${{ inputs.release-version }}" \
+            --field imageName="${{ github.repository_owner }}/${{ inputs.image-name }}" \
+            --field sourceRepo="${{ github.repository }}" \
+            --field actor="${{ github.actor }}"
+
+  create_tags:
+    name: Create Git Tags
+    runs-on: self-hosted
+    timeout-minutes: 5
+    needs: build_and_push
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+
+      - name: Create and push tags
+        run: |
+          git tag "${{ inputs.release-version }}"
+          git push origin "${{ inputs.release-version }}"
+          git tag -f latest
+          git push -f origin latest
+
+  create_release:
+    name: Create GitHub Pre-Release
+    runs-on: self-hosted
+    timeout-minutes: 10
+    needs: create_tags
+    permissions:
+      contents: write
+      discussions: write
+      pull-requests: read
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          toTag: ${{ inputs.release-version }}
+          configuration: '.github/release-changelog-config.json'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release-version }}
+          name: Release ${{ inputs.release-version }}
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  open_hotfix_pr:
+    name: Open Hotfix PR
+    runs-on: self-hosted
+    timeout-minutes: 5
+    needs: create_tags
+    if: inputs.is-hotfix
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+
+      - name: Create PR to default branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Merge hotfix ${{ inputs.release-version }} into ${{ github.event.repository.default_branch }}" \
+            --body "Automated PR to merge hotfix branch back into the default branch after release ${{ inputs.release-version }}." \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "${{ github.ref_name }}"
