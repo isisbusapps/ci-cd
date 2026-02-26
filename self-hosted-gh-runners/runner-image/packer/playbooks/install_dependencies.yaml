@@ -1,0 +1,41 @@
+- name: Install dependencies
+  remote_user: ubuntu
+  hosts: 127.0.0.1
+  connection: local
+  
+  tasks:
+    - name: Install docker
+      become: true
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Install docker buildkit features
+      become: true
+      ansible.builtin.apt:
+        name: docker-buildx
+        state: present
+      
+    - name: Install GitHub CLI
+      become: true
+      ansible.builtin.apt:
+        name: gh
+        state: present
+
+    - name: Setup docker user
+      become: true
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Extract Runner
+      ansible.builtin.unarchive:
+        src: https://github.com/actions/runner/releases/download/v{{RUNNER_VERSION}}/actions-runner-linux-x64-{{RUNNER_VERSION}}.tar.gz
+        dest: ~/actions-runner
+        remote_src: yes
+    
+    - name: Install dependencies
+      ansible.builtin.shell:
+        chdir: ~/actions-runner
+        cmd: sudo ./bin/installdependencies.sh

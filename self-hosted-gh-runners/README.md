@@ -29,3 +29,10 @@ GitHub workflow_job webhook can trigger creation & destruction of VMs & runners
 6. remove runner
 7. terraform removes VM
 
+## Steps to implement
+
+1. Recreate the static deployment done via jenkins
+2. Test it, of course!
+
+3. Create a service to listen to workflow_job webook.
+4. Set the service to trigger terraform changes

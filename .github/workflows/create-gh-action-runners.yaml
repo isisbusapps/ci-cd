@@ -1,0 +1,107 @@
+name: Create Github Action Runners
+on: 
+  workflow-dispatch:
+    inputs:
+      runner_count:
+        description: "Number of Runners to Deploy"
+        required: true
+        default: 5
+
+      runner_flavor:
+        description: "The Flavor of VM to create. l3.nano (More Runners, Less Power) | l3.micro (Middle Ground) | l3.tiny (Less Runners, More Power)"
+        required: true
+        default: l3.nano
+
+jobs:
+  apply-terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: self-hosted-gh-runners/static/terraform
+    outputs:
+      vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
+    env:
+      OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
+      IMAGE_NAME: github-action-runner-image
+      FLAVOR_NAME: l3.nano
+      TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
+      TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Create clouds.yaml
+        run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+          terraform_wrapper: false
+
+      - name: Get terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="tfstate" "tfstate" > terraform.tfstate
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan
+        run: terraform plan -out=tfplan 1> /dev/null
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan 1> /dev/null
+
+      - name: Create hosts.ini & Crete list of IPs
+        id: check-vms
+        run: |
+          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
+          && echo "vm_ips=$(echo $(terraform output -json vm_ips) | jq -r '.[]')" >> $GITHUB_OUTPUT
+
+      - name: Put terraform.tfstate
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
+
+      - name: Setup SSH
+        env:
+          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
+          FASE_SSH_KEY: ${{ secrets.FASE_SSH_KEY}}
+        run: |
+          mkdir -p ~/.ssh/
+          echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+          echo "$VM_IPS" >> ../ansible/hosts.txt
+          sed -i '$!s/$/,/' ../ansible/hosts.txt
+          ssh-keyscan -f ../ansible/hosts.txt >> ~/.ssh/known_hosts
+
+      - name: Configure the Runners
+        env: 
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          cat > /tmp/extra_vars.yml << EOF
+          ACCESS_TOKEN: "$ACCESS_TOKEN"
+          ORG: "${{ github.repository_owner }}"
+          EOF
+
+          ansible-playbook \ 
+          --private-key ~/.ssh/id_rsa \
+          -u ${{ secrets.ANSIBLE_DEPLOY_USER }} \
+          -i ../ansible/hosts.ini \ 
+          ../ansible/create-gh-action-runners.yaml \ 
+          --extra-vars "@/tmp/extra_vars.yml"
+
+          rm -f /tmp/extra_vars.yml
+
+      - name: Put hosts.ini
+        env:
+          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "hosts" hosts="$VM_IPS"
+      
+
+

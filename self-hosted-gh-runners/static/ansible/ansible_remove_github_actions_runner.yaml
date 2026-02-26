@@ -1,0 +1,27 @@
+- name: Register & Start Runner
+  hosts: servers
+  remote_user: ubuntu
+
+  tasks:
+    - name: Stop Runner Service
+      become: true
+      ansible.builtin.command:
+        chdir: /home/ubuntu/actions-runner/
+        argv:
+          - ./svc.sh
+          - stop
+
+    - name: Uninstall Runner Service
+      become: true
+      ansible.builtin.command:
+        chdir: /home/ubuntu/actions-runner/
+        argv:
+          - ./svc.sh
+          - uninstall
+
+    - name: Extract & Configure the runner
+      ansible.builtin.command:
+        argv:
+          - /home/ubuntu/remove.sh
+          - "{{ACCESS_TOKEN}}"
+          - "{{ORG}}"
