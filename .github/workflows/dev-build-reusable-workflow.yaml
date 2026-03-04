@@ -45,7 +45,7 @@ jobs:
       image-digest: ${{ steps.docker_build.outputs.digest }}
     steps:
       - name: Checkout source repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Docker Buildx (with mirror)
         if: inputs.use-dockerhub-mirror
@@ -85,7 +85,7 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - name: Checkout GitOps repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
