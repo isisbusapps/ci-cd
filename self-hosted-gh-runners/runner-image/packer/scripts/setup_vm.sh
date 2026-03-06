@@ -7,7 +7,7 @@ sudo apt-get install -y ansible
 
 ansible --version 
 
-sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/home/ubunutu/job_started.sh >> /etc/environment"
+sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_STARTED=/home/ubuntu/job_started.sh >> /etc/environment"
 sudo sh -c "echo ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/home/ubuntu/job_completed.sh >> /etc/environment"
 
 sudo chmod +x ~/job_started.sh
