@@ -31,17 +31,26 @@ build {
     name = "openstack-image-build"
     sources = ["source.openstack.gh_action_runner_image"]
 
+    provisioner "shell" {
+        inline = [ "mkdir ~/setup-scripts && mkdir ~/runner-scripts" ]
+    }
+
     provisioner "file" {
-        sources = ["scripts/configure.sh", "scripts/docker_prune.sh", "scripts/job_started.sh", "scripts/job_completed.sh", "scripts/remove.sh"]
-        destination = "~/"
+        source = ["../../scripts/setup-scripts/"]
+        destination = "~/setup-scripts/"
+    }
+
+    provisioner "file" {
+        source "../../scripts/runner-scripts/"
+        destination = "~/runner-scripts"
     }
 
     provisioner "shell" {
-        script = "scripts/setup_vm.sh"
+        script = "../../scripts/packer-scripts/setup_vm.sh"
     }
 
     provisioner "ansible-local" {
-        playbook_file = "playbooks/install_dependencies.yaml"
+        playbook_file = "../../playbooks/install_dependencies.yaml"
         extra_arguments = ["--extra-vars", "RUNNER_VERSION=${var.runner_version}"]
     }  
 }
