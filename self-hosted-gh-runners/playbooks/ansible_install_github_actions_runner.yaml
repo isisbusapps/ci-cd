@@ -11,14 +11,14 @@
     
     - name: Change File Permissions
       ansible.builtin.file:
-        path: /home/ubuntu/configure.sh
+        path: /home/ubuntu/setup-scripts/configure.sh
         state: touch
         mode: u=rwx,g=r,o=r
 
     - name: Configure the runner
       ansible.builtin.command:
         argv:
-          - /home/ubuntu/configure.sh
+          - /home/ubuntu/setup-scripts/configure.sh
           - "{{ACCESS_TOKEN}}"
           - "{{ORG}}"
 
