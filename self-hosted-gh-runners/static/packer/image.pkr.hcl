@@ -36,12 +36,12 @@ build {
     }
 
     provisioner "file" {
-        source = ["../../scripts/setup-scripts/"]
+        source = "../../scripts/setup-scripts/"
         destination = "~/setup-scripts/"
     }
 
     provisioner "file" {
-        source "../../scripts/runner-scripts/"
+        source = "../../scripts/runner-scripts/"
         destination = "~/runner-scripts"
     }
 

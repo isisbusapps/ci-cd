@@ -63,7 +63,3 @@ jobs:
         run: |
           vault login ${{ secrets.VAULT_TOKEN }}
           vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
-
-      
-
-
