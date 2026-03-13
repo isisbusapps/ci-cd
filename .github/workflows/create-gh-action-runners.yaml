@@ -1,4 +1,4 @@
-name: Create Github Action Runners
+name: GH Runners Static Deployment
 on: 
   workflow-dispatch:
     inputs:

@@ -1,4 +1,4 @@
-name: apply-sh-gh-runner-config
+name: GH Runners Static Destroy
 on: 
   workflow-dispatch:
 
