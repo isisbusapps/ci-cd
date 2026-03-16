@@ -6,6 +6,9 @@ on:
         description: "Name of image to create"
         required: true
         default: "static-gh-action-runner-image"
+  push:
+    branches:
+      - CreateVMsWithGHActions
 
 jobs:
   packer:
