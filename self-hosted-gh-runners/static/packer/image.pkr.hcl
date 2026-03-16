@@ -11,7 +11,7 @@ packer {
     }
 }
 
-source "openstack" "gh_action_runner_image" {
+source "openstack" "static_gh_action_runner_image" {
     ssh_username = "ubuntu"
     cloud = "openstack"
     source_image = var.source_image
@@ -23,13 +23,13 @@ source "openstack" "gh_action_runner_image" {
     metadata = {
         built_by = "packer"
         team = "ua-ci-cd"
-        usage = "Self Hosted GH Action Runners"
+        usage = "Self Hosted Static GH Action Runners"
     }
 }
 
 build {
     name = "openstack-image-build"
-    sources = ["source.openstack.gh_action_runner_image"]
+    sources = ["source.openstack.static_gh_action_runner_image"]
 
     provisioner "shell" {
         inline = [ "mkdir ~/setup-scripts && mkdir ~/runner-scripts" ]
