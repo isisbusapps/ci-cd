@@ -1,6 +1,6 @@
 name: GH Runners Static Deployment
 on: 
-  workflow-dispatch:
+  workflow_dispatch:
     inputs:
       runner_count:
         description: "Number of Runners to Deploy"

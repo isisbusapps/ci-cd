@@ -1,6 +1,6 @@
 name: GH Runners Static Destroy
 on: 
-  workflow-dispatch:
+  workflow_dispatch:
 
 jobs:
   apply-terraform:
