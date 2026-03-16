@@ -89,5 +89,6 @@ jobs:
     - name: Delete old images
       run: |
         cd ../../scripts/packer-scripts/
+        chmod +x delete_old_images.sh
         ls -la
         ./delete_old_images.sh
