@@ -73,7 +73,7 @@ build {
 
 build {
     name = "Build Ansible Image"
-    sources = ["source.openstack.static_gh_action_runner_image"]
+    sources = ["source.openstack.ua-ansible-image"]
 
     provisioner "shell" {
         script = "../../scripts/packer-scripts/setup_ansible_vm.sh"
