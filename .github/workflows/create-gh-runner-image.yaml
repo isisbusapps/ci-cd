@@ -84,7 +84,7 @@ jobs:
         RUNNER_VERSION: ${{ steps.get-runner-version.outputs.runner_version }}
       run: |
         packer validate .
-        packer build -parrallel-builds=1 .
+        packer build -parallel-builds=1 .
 
     - name: Delete old images
       run: |
