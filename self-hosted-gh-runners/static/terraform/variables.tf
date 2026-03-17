@@ -7,3 +7,7 @@ variable "runner_count" {
     type = number
     default = 3
 }
+
+variable "floating_ip" {
+    type = string
+}

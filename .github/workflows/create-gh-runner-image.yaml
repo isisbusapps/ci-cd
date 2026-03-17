@@ -22,7 +22,7 @@ jobs:
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
       FLAVOR_NAME: l3.nano
       NETWORK_NAME: ua-ci-cd
-      FLOATING_IP: ${{ secrets.PACKER_FLOATING_IP }}
+      FLOATING_IP: ${{ secrets.UA_FLOATING_IP }}
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       GITHUB_ORG: ${{ github.repository_owner }}
     

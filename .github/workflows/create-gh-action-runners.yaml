@@ -26,6 +26,7 @@ jobs:
       FLAVOR_NAME: l3.nano
       TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
       TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
+      TF_VAR_floating_ip: ${{ secrets.UA_FLOATING_IP }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
