@@ -34,7 +34,7 @@ source "openstack" "ua-ansible-image" {
     flavor = var.flavor
     networks = [var.network]
     floating_ip = var.floating_ip
-    image_name = ua-ansible-image
+    image_name = "ua-ansible-image"
     image_visibility = "private"
     metadata = {
         built_by = "packer"
