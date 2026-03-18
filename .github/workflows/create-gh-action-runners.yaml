@@ -33,8 +33,8 @@ jobs:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       IMAGE_NAME: ${{ github.events.inputs.image_name }}
       FLAVOR_NAME: l3.nano
-      TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
-      TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
+      TF_VAR_runner_count: 3 #${{ github.events.inputs.runner_count }}
+      TF_VAR_flavor_name: l3.nano #${{ github.events.inputs.runner_flavor }}
       TF_VAR_floating_ip: ${{ secrets.UA_FLOATING_IP }}
     steps:
       - name: Checkout repo
