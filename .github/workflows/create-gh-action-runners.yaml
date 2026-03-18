@@ -68,6 +68,7 @@ jobs:
         id: check-vms
         run: |
           echo "[servers]" > ../../playbooks/hosts.ini
+          STOP=$(uuidgen)
           echo "::stop-commands::$STOP"
           terraform output -json vm_ips > ../../playbooks/hosts.json
           echo "::$STOP::"
