@@ -10,8 +10,7 @@ on:
         required: true
         type: string
       gitops-patch-path:
-        description: 'Relative path in gitops repo to prod patch-image.yml'
-        required: true
+        description: 'Relative path in gitops repo to prod patch-image.yml'       
         type: string
       release-version:
         description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
@@ -41,6 +40,9 @@ on:
         required: false
         type: string
         default: 'Dockerfile'
+      ishelm-deployment:
+        type: boolean
+        default: false  
     secrets:
       workflow-token:
         required: true
@@ -115,10 +117,19 @@ jobs:
 
       - name: Update image reference
         uses: mikefarah/yq@v4.48.1
-        with:
+        if: {{ !inputs.ishelm }}
+        with:        
           cmd: |
             yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
               './${{ inputs.gitops-patch-path }}'
+
+      - name: Update image reference for helm deployment
+        uses: mikefarah/yq@v4.48.1
+        with:
+        if: {{ inputs.ishelm }}
+          cmd: |
+            yq e -i 'image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+              './${{ inputs.gitops-patch-path }}'        
 
       - name: Commit and push changes
         run: |
