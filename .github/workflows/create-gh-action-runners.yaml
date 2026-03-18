@@ -67,9 +67,10 @@ jobs:
       - name: Create hosts.ini & Crete list of IPs
         id: check-vms
         run: |
-          
-          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../../playbooks/hosts.ini
-          echo "vm_ips=$(echo $(terraform output -json vm_ips) | jq -r '.[]')" >> $GITHUB_OUTPUT
+          echo "[servers]" > ../../playbooks/hosts.ini
+          VM_IPS=$(terraform output -json vm_ips)
+          echo "$VM_IPS" | jq -r '.[]' >> ../../playbooks/hosts.ini
+          echo "vm_ips=$(echo "$VM_IPS" | jq -r '.[]')" >> $GITHUB_OUTPUT
       
       - name: Put hosts.ini
         env:
