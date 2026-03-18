@@ -34,7 +34,6 @@ resource "openstack_compute_instance_v2" "runner" {
 }
 
 resource "openstack_compute_instance_v2" "configure" {
-    count = 1
     name = "ua-ansible-image"
     image_id = data.openstack_images_image_ids_v2.ansible_image.ids[0]
     flavor_id = data.openstack_compute_flavor_v2.l3nano.id
