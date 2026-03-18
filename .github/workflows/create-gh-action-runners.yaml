@@ -19,7 +19,7 @@ on:
   
   push:
     branches:
-      - CreateVMsWithGHAction
+      - CreateVMsWithGHActions
 
 jobs:
   apply-terraform:
