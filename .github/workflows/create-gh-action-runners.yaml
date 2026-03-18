@@ -68,7 +68,9 @@ jobs:
         id: check-vms
         run: |
           echo "[servers]" > ../../playbooks/hosts.ini
+          echo "Test"
           VM_IPS=$(terraform output -json vm_ips)
+          echo $VM_IPS
           echo "$VM_IPS" | jq -r '.[]' >> ../../playbooks/hosts.ini
           echo "vm_ips=$(echo "$VM_IPS" | jq -r '.[]')" >> $GITHUB_OUTPUT
       
