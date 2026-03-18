@@ -69,10 +69,12 @@ jobs:
         run: |
           echo "[servers]" > ../../playbooks/hosts.ini
           STOP=$(uuidgen)
-          echo "::stop-commands::$STOP"
+          
           terraform output -json vm_ips > ../../playbooks/hosts.json
-          echo "::$STOP::"
+          
+          echo "::stop-commands::$STOP"
           jq -r '.[]' ../../playbooks/hosts.json >> ../../playbooks/hosts.ini
+          echo "::$STOP::"
           echo "vm_ips=$(jq -r '.[]' ../../playbooks/hosts.json)" >> $GITHUB_OUTPUT
       
       - name: Put hosts.ini
