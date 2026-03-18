@@ -57,8 +57,8 @@ jobs:
 
       - name: Get terraform.tfstate
         run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="static-tfstate" "static-tfstate" > terraform.tfstate
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }}
+          vault kv get -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" -field="static-tfstate" "static-tfstate" > terraform.tfstate
 
       - name: Terraform init
         run: terraform init
@@ -80,13 +80,13 @@ jobs:
         env:
           VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
         run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "static-hosts" static-hosts="$VM_IPS"
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-hosts" static-hosts="$VM_IPS"
 
       - name: Put terraform.tfstate
         run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
 
       - name: Setup SSH
         env:
