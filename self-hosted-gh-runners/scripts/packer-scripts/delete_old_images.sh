@@ -1,7 +1,8 @@
 #!/bin/bash
 
 delete_images() {
-  local IMAGE_IDS = $1
+  local IMAGE_IDS=$( echo $1 | jq -r 'join(" ")')
+  local IMAGE_COUNT=$2
 
   echo "Get Image Info from IDs"
   IMAGE_INFO=$(
@@ -21,23 +22,23 @@ delete_images() {
 }
 
 echo "Get Image IDs from Name"
-RUNNER_IMAGE_IDS=$( echo $(openstack image list --name "$IMAGE_NAME" -f json) | jq -r '.[].ID')
-ANSIBLE_IMAGE_IDS=$( echo $(openstack image list --name "ua-ansible-image" -f json) | jq -r '.[].ID')
+RUNNER_IMAGE_IDS=$( echo $(openstack image list --name "$IMAGE_NAME" -f json) | jq -r '[.[].ID]')
+ANSIBLE_IMAGE_IDS=$( echo $(openstack image list --name "ua-ansible-image" -f json) | jq -r '[.[].ID]')
 
 echo "Check No. of Images"
-RUNNER_IMAGE_COUNT=$(echo "$RUNNER_IMAGE_IDS" | jq 'length')
-ANSIBLE_IMAGE_COUNT=$(echo "$ANSIBLE_IMAGE_IDS" | jq 'length')
+RUNNER_IMAGE_COUNT=$(echo "$RUNNER_IMAGE_IDS" | jq -r 'length')
+ANSIBLE_IMAGE_COUNT=$(echo "$ANSIBLE_IMAGE_IDS" | jq -r 'length')
 
 if [[ "$RUNNER_IMAGE_COUNT" -gt 1 ]]; then
-  delete_images $RUNNER_IMAGE_IDS
+  delete_images "$RUNNER_IMAGE_IDS" "$RUNNER_IMAGE_COUNT"
 else
-  echo "No runner images to delete, (found $IMAGE_COUNT image)."
+  echo "No runner images to delete, (found $RUNNER_IMAGE_COUNT image)"
 fi
 
 if [[ "$ANSIBLE_IMAGE_COUNT" -gt 1 ]]; then
-  delete_images $ANSIBLE_IMAGE_IDS
+  delete_images "$ANSIBLE_IMAGE_IDS" "$ANSIBLE_IMAGE_COUNT"
 else
-  echo "No ansible images to delete, (found $IMAGE_COUNT image)."
+  echo "No ansible images to delete, (found $ANSIBLE_IMAGE_COUNT image)"
 fi
 
 echo "Any old images deleted"
