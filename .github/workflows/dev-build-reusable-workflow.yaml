@@ -12,7 +12,8 @@ on:
         required: true
         type: string
       gitops-patch-path:
-        description: 'Relative path in gitops repo to dev patch-image.yml'        
+        description: 'Relative path in gitops repo to dev patch-image.yml'
+        required: true        
         type: string
       use-dockerhub-mirror:
         description: 'Use dockerhub.stfc.ac.uk as a Docker Hub pull-through cache'
@@ -102,7 +103,7 @@ jobs:
 
       - name: Update image reference
         uses: mikefarah/yq@v4.48.1
-        if: {{ !inputs.ishelm }}
+        if: ${{ !inputs.ishelm-deployment }}
         with:
           cmd: |
             yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
@@ -110,8 +111,8 @@ jobs:
 
       - name: Update image reference for helm deployment
         uses: mikefarah/yq@v4.48.1
+        if: ${{ inputs.ishelm-deployment }}
         with:
-        if: {{ inputs.ishelm }}
           cmd: |
             yq e -i 'image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
               './${{ inputs.gitops-patch-path }}'           
