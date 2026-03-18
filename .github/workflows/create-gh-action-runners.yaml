@@ -12,6 +12,11 @@ on:
         required: true
         default: l3.nano
 
+      image_name:
+        description: "Name of image to create"
+        required: true
+        default: "static-gh-action-runner-image"
+
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
@@ -22,7 +27,7 @@ jobs:
       vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
-      IMAGE_NAME: github-action-runner-image
+      IMAGE_NAME: ${{ github.events.inputs.image_name }}
       FLAVOR_NAME: l3.nano
       TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
       TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
@@ -43,7 +48,7 @@ jobs:
       - name: Get terraform.tfstate
         run: |
           vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="tfstate" "tfstate" > terraform.tfstate
+          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="static-tfstate" "static-tfstate" > terraform.tfstate
 
       - name: Terraform init
         run: terraform init
@@ -57,10 +62,48 @@ jobs:
       - name: Create hosts.ini & Crete list of IPs
         id: check-vms
         run: |
-          echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../ansible/hosts.ini \
+          echo "[servers]" > ../ansible/hosts.ini \
+          && echo $(terraform output -json vm_ips) | jq -r '.[]' >> ../../playbooks/hosts.ini \
           && echo "vm_ips=$(echo $(terraform output -json vm_ips) | jq -r '.[]')" >> $GITHUB_OUTPUT
+      
+      - name: Put hosts.ini
+        env:
+          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
+        run: |
+          vault login ${{ secrets.VAULT_TOKEN }}
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "static-hosts" static-hosts="$VM_IPS"
 
       - name: Put terraform.tfstate
         run: |
           vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
+          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
+
+      - name: Setup SSH
+        env:
+          RUNNER_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
+          ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
+          FASE_SSH_KEY: ${{ secrets.FASE_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+          echo "$RUNNER_IPS" >> ../../playbooks/hosts.txt
+          sed -i '$!s/$/,/' ../../playbooks/hosts.txt
+          echo "$ANSIBLE_IP" >> ~/host.txt
+          ssh-keyscan -f ~/host.txt >> ~/.ssh/known_hosts
+
+      - name: Set Up Ansible VM
+        env:
+          VM_IP: ${{ secrets.UA_FLOATING_IP }}
+        run: |
+          scp -r ../../playbooks/ ubuntu@$VM_IP ~/playbooks
+          ssh ubuntu@$VM_IP ssh-keyscan -f ~/playbooks/hosts.txt >> ~/.ssh/known_hosts
+
+      - name: Run playbook on ansible VM
+        env:
+          VM_IP: ${{ secrets.UA_FLOATING_IP }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          ssh ubuntu@$VM_IP ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars="ACCESS_TOKEN=$ACCESS_TOKEN" --extra-vars="ORG=isisbusapps"

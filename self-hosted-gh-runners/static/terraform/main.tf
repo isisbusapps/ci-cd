@@ -22,7 +22,7 @@ data "openstack_networking_floatingip_v2" "fip" {
 
 resource "openstack_compute_instance_v2" "runner" {
     count = var.runner_count
-    name = "ua-gh-action-runner-${count.index + 1}"
+    name = "TEST-WORKFLOW-DEPLOYMENT-ua-gh-action-runner-${count.index + 1}"
     image_id = data.openstack_images_image_ids_v2.runner_image.ids[0]
     flavor_id = data.openstack_compute_flavor_v2.l3nano.id
     key_pair = "FASE_CLOUD_DEV"
