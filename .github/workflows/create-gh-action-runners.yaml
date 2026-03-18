@@ -69,7 +69,8 @@ jobs:
         run: |
           echo "[servers]" > ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.ini
-      
+          echo "vm_ips=$(terraform output -json vm_ips | jq -r '.[]')" >> $GITHUB_OUTPUT
+   
       - name: Put hosts.ini
         env:
           VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
