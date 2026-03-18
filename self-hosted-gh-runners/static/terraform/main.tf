@@ -17,7 +17,7 @@ data "openstack_compute_flavor_v2" "l3nano" {
 }
 
 data "openstack_networking_floatingip_v2" "fip" {
-    address = var.floating_IP
+    address = var.floating_ip
 }
 
 resource "openstack_compute_instance_v2" "runner" {
