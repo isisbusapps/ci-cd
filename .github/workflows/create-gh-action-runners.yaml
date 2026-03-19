@@ -87,7 +87,7 @@ jobs:
         env:
           RUNNER_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
-          FASE_SSH_KEY: ${{ secrets.FASE_SSH_KEY }}
+          FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh/
           echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
