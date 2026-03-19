@@ -82,13 +82,14 @@ jobs:
         run: |
           vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
           vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
+          mkdir -p ~/.ssh/
 
       - name: Setup SSH
         env:
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
-          mkdir -p ~/.ssh/
+          
           echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
           ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
         
