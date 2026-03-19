@@ -98,7 +98,11 @@ jobs:
         env:
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
-          ssh-keyscan -v -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
+          for i in {1..10}; do
+            ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts && break
+            echo "Retry $i: SSH not ready yet..."
+            sleep 5
+          done
 
       - name: Set Up Ansible VM
         env:
