@@ -89,19 +89,16 @@ jobs:
         run: |
           mkdir -p ~/.ssh/
           echo $FASE_SSH_KEY >> ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+          sed -i '$!s/$/,/' ../../playbooks/hosts.txt
       
       - name: Setup SSH known hosts
         env:
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
-          ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
-        
-      - name: Setup SSH Debug
-        run: |
-          chmod 400 ~/.ssh/id_rsa
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_rsa
-          sed -i '$!s/$/,/' ../../playbooks/hosts.txt
+          ssh-keyscan -v -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
 
       - name: Set Up Ansible VM
         env:
