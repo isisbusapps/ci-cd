@@ -90,12 +90,14 @@ jobs:
         run: |
           mkdir -p ~/.ssh/
           echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
+          ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
+        
+      - name: Setup SSH Debug
+        run: |
           chmod 400 ~/.ssh/id_rsa
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
           sed -i '$!s/$/,/' ../../playbooks/hosts.txt
-          ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
-          echo 8
 
       - name: Set Up Ansible VM
         env:
