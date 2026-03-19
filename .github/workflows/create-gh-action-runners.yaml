@@ -88,7 +88,7 @@ jobs:
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh/
-          echo $FASE_SSH_KEY >> ~/.ssh/id_rsa
+          echo -e "$FASE_SSH_KEY" >> ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/id_rsa
