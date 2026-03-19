@@ -69,7 +69,7 @@ jobs:
         run: |
           echo "[servers]" > ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.ini
-          echo "vm_ips=$(terraform output -json vm_ips | jq -r '.[]')" >> $GITHUB_OUTPUT
+          terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.txt
    
       - name: Put hosts.ini
         env:
@@ -85,7 +85,6 @@ jobs:
 
       - name: Setup SSH
         env:
-          RUNNER_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
