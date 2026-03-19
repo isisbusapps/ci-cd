@@ -99,7 +99,7 @@ jobs:
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
           for i in {1..10}; do
-            ssh-keyscan -H "130.246.82.165" >> ~/.ssh/known_hosts && break
+            ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts && break
             echo "Retry $i: SSH not ready yet..."
             sleep 5
           done
