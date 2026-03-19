@@ -115,7 +115,7 @@ jobs:
         if: ${{ inputs.ishelm-deployment }}
         with:
           cmd: |
-            yq e -i 'image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+            yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
               './${{ inputs.gitops-patch-path }}'           
 
       - name: Commit and push changes
