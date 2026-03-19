@@ -101,10 +101,8 @@ jobs:
           echo 6
           sed -i '$!s/$/,/' ../../playbooks/hosts.txt
           echo 7
-          echo "$ANSIBLE_IP" >> ~/host.txt
+          ssh-keyscan $ANSIBLE_IP >> ~/.ssh/known_hosts
           echo 8
-          ssh-keyscan -f ~/host.txt >> ~/.ssh/known_hosts
-          echo 9
 
       - name: Set Up Ansible VM
         env:
