@@ -108,6 +108,7 @@ jobs:
         env:
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
+          ssh ubuntu@$VM_IP mkdir -p ~/playbooks
           scp -r ../../playbooks/ ubuntu@$VM_IP ~/playbooks
           ssh ubuntu@$VM_IP ssh-keyscan -f ~/playbooks/hosts.txt >> ~/.ssh/known_hosts
 
