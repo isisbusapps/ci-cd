@@ -88,20 +88,13 @@ jobs:
           ANISBLE_IP: ${{ secrets.UA_FLOATING_IP }}
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
-          echo 1
           mkdir -p ~/.ssh/
-          echo 2
           echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
-          echo 3
           chmod 400 ~/.ssh/id_rsa
-          echo 4
           eval $(ssh-agent -s)
-          echo 5
           ssh-add ~/.ssh/id_rsa
-          echo 6
           sed -i '$!s/$/,/' ../../playbooks/hosts.txt
-          echo 7
-          ssh-keyscan -H $ANSIBLE_IP >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts
           echo 8
 
       - name: Set Up Ansible VM
