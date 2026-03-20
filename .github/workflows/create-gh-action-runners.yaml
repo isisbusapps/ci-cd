@@ -103,8 +103,8 @@ jobs:
             echo "Retry $i: SSH not ready yet..."
             sleep 5
           done
-          ssh ubuntu@$VM_IP "mkdir -p ~/playbooks"
-          scp -r ../../playbooks/ ubuntu@$VM_IP:~/playbooks
+          ssh ubuntu@$VM_IP "mkdir -p ~/playbooks/"
+          scp -r ../../playbooks/ ubuntu@$VM_IP:~/playbooks/
           for i in {1..10}; do
             ssh ubuntu@$VM_IP "ssh-keyscan -f /home/ubuntu/playbooks/hosts.txt >> /home/ubuntu/.ssh/known_hosts" && break
             echo "Retry $i: SSH not ready yet..."
@@ -117,5 +117,5 @@ jobs:
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          ssh ubuntu@$VM_IP "ls ~/playbooks"
+          ssh ubuntu@$VM_IP "ls ~/playbooks/"
           ssh ubuntu@$VM_IP "ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars='ACCESS_TOKEN=$ACCESS_TOKEN' --extra-vars='ORG=isisbusapps'"
