@@ -117,4 +117,4 @@ jobs:
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          ssh ubuntu@$VM_IP ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars="ACCESS_TOKEN=$ACCESS_TOKEN" --extra-vars="ORG=isisbusapps"
+          ssh ubuntu@$VM_IP "ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars='ACCESS_TOKEN=$ACCESS_TOKEN' --extra-vars='ORG=isisbusapps'"
