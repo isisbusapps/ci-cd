@@ -70,6 +70,8 @@ jobs:
           echo "[servers]" > ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.txt
+          cat ../../playbooks/hosts.ini
+          cat ../../playbooks/hosts.txt
    
       - name: Put hosts.ini
         env:
@@ -99,7 +101,7 @@ jobs:
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
           for i in {1..10}; do
-            ssh-keyscan -H "$ANSIBLE_IP" >> ~/.ssh/known_hosts && break
+            ssh-keyscan -H "$VM_IP" >> ~/.ssh/known_hosts && break
             echo "Retry $i: SSH not ready yet..."
             sleep 5
           done
