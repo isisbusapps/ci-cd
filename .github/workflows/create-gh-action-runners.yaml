@@ -104,7 +104,7 @@ jobs:
             sleep 5
           done
           ssh ubuntu@$VM_IP "mkdir -p ~/playbooks/"
-          scp -r ../../playbooks/ ubuntu@$VM_IP:~/playbooks/
+          scp -r ../../playbooks/ ubuntu@$VM_IP:~/
           for i in {1..10}; do
             ssh ubuntu@$VM_IP "ssh-keyscan -f /home/ubuntu/playbooks/hosts.txt >> /home/ubuntu/.ssh/known_hosts" && break
             echo "Retry $i: SSH not ready yet..."
