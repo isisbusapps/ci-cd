@@ -70,15 +70,13 @@ jobs:
           echo "[servers]" > ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.ini
           terraform output -json vm_ips | jq -r '.[]' >> ../../playbooks/hosts.txt
-          cat ../../playbooks/hosts.ini
-          cat ../../playbooks/hosts.txt
    
       - name: Put hosts.ini
         env:
           VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips }}
         run: |
           vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
-          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-hosts" static-hosts="$VM_IPS"
+          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-hosts" static-hosts="@../../playbooks/hosts.txt"
 
       - name: Put terraform.tfstate
         run: |
@@ -105,9 +103,14 @@ jobs:
             echo "Retry $i: SSH not ready yet..."
             sleep 5
           done
-          ssh ubuntu@$VM_IP mkdir -p ~/playbooks
-          scp -r ../../playbooks/ ubuntu@$VM_IP ~/playbooks
-          ssh ubuntu@$VM_IP ssh-keyscan -f ~/playbooks/hosts.txt >> ~/.ssh/known_hosts
+          ssh ubuntu@$VM_IP mkdir -p /home/ubuntu/playbooks
+          scp -r ../../playbooks/ ubuntu@$VM_IP /home/ubuntu/playbooks
+          for i in {1..10}; do
+            ssh ubuntu@$VM_IP ssh-keyscan -f /home/ubuntu/playbooks/hosts.txt >> /home/ubuntu/.ssh/known_hosts && break
+            echo "Retry $i: SSH not ready yet..."
+            sleep 5
+          done
+          
 
       - name: Run playbook on ansible VM
         env:
