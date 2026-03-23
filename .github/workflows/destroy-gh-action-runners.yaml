@@ -83,7 +83,7 @@ jobs:
           done
           ssh ubuntu@$VM_IP "mkdir -p ~/playbooks/"
           scp -r ../../playbooks/ ubuntu@$VM_IP:~/
-          # scp ~/.ssh/id_rsa ubuntu@$VM_IP:~/.ssh/id_rsa
+          scp ~/.ssh/id_rsa ubuntu@$VM_IP:~/.ssh/id_rsa
           echo "Add Runner VM to Ansible VM known host"
           ssh ubuntu@$VM_IP "eval $(ssh-agent -s)"
           ssh ubuntu@$VM_IP "chmod 400 ~/.ssh/id_rsa"
