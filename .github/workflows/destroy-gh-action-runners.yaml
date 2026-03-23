@@ -73,8 +73,6 @@ jobs:
         env: 
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
-          echo "[servers]" > ../../playbooks/hosts.ini
-          cat ../../playbooks/hosts.txt >> ../../playbooks/hosts.ini
           echo "Add Ansible VM to GH VM known host"
           for i in {1..10}; do
             ssh-keyscan -H "$VM_IP" >> ~/.ssh/known_hosts && break
