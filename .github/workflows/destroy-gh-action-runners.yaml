@@ -8,11 +8,16 @@ jobs:
     defaults:
       run:
         working-directory: self-hosted-gh-runners/static/terraform
+        push:
+          branches:
+            - CreateVMsWithGHActions
     outputs:
       vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      TF_VAR_flavor_name: l3.nano #${{ github.events.inputs.runner_flavor }}
+      TF_VAR_floating_ip: ${{ secrets.UA_FLOATING_IP }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -20,61 +25,91 @@ jobs:
       - name: Create clouds.yaml
         run: echo "${{ secrets.OPENSTACK_CLOUDS }}" >> ${{ github.workspace }}/clouds.yaml
       
-      - name: Get terraform.tfstate
-        run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="hosts" "hosts" >> ../ansible/hosts.txt
-
-      - name: Setup SSH
-        env:
-          VM_IPS: ${{ steps.export.outputs.check-vms.vm_ips}}
-          FASE_SSH_KEY: ${{ secrets.FASE_SSH_KEY}}
-        run: |
-          mkdir -p ~/.ssh/
-          echo -e "$FASE_SSH_KEY" > ~/.ssh/id_rsa
-          chmod 400 ~/.ssh/id_rsa
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_rsa
-          echo "$VM_IPS" >> ../ansible/hosts.txt
-          sed -i '$!s/$/,/' ../ansible/hosts.txt
-          ssh-keyscan -f ../ansible/hosts.txt >> ~/.ssh/known_hosts
-
-      - name: Run GitHub runner setup playbook
-        env:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        run: |
-          cat > /tmp/extra_vars.yml << EOF
-          ACCESS_TOKEN: "$ACCESS_TOKEN"
-          ORG: "${{ github.repository_owner }}"
-          EOF
-
-          ansible-playbook \
-          --private-key ~/.ssh/id_rsa \
-          -i ../ansible/hosts.ini \
-          ../ansible/destroy-gh-action-runners.yaml \
-          --extra-vars "@/tmp/extra_vars.yml"
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.14.3
           terraform_wrapper: false
       
+      - name: Setup vault
+        run: |
+          wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install vault
+
       - name: Get terraform.tfstate
         run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv get -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" -field="tfstate" "tfstate" > terraform.tfstate
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
+          vault kv get -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" -field="static-tfstate" "static-tfstate" >> terraform.tfstate
 
       - name: Terraform init
         run: terraform init
 
-      - name: Terraform destroy
-        run: terraform destroy -auto-approve 1> /dev/null
+      - name: Terraform plan
+        run: terraform plan -target="openstack_compute_instance_v2.configure" -out=tfplan 1> /dev/null
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan 1> /dev/null
+      
+      - name: Get GH Runner Hosts
+        run: |
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
+          vault kv get -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" -field="static-hosts" "static-hosts" >> ../../playbooks/hosts.txt
+
+      - name: Setup SSH
+        env:
+          FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo -e "$FASE_SSH_KEY" >> ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_rsa
+          sed -i '$!s/$/,/' ../../playbooks/hosts.txt
+      
+      - name: Setup Ansible VM
+        env: 
+          VM_IP: ${{ secrets.UA_FLOATING_IP }}
+        run: |
+          echo "[servers]" > ../../playbooks/hosts.ini
+          cat ../../playbooks/hosts.txt >> ../../playbooks/hosts.ini
+          echo "Add Ansible VM to GH VM known host"
+          for i in {1..10}; do
+            ssh-keyscan -H "$VM_IP" >> ~/.ssh/known_hosts && break
+            echo "Retry $i: SSH not ready yet..."
+            sleep 5
+          done
+          ssh ubuntu@$VM_IP "mkdir -p ~/playbooks/"
+          scp -r ../../playbooks/ ubuntu@$VM_IP:~/
+          scp ~/.ssh/id_rsa ubuntu@$VM_IP:~/.ssh/id_rsa
+          echo "Add Runner VM to Ansible VM known host"
+          ssh ubuntu@$VM_IP "eval $(ssh-agent -s)"
+          ssh ubuntu@$VM_IP "chmod 400 ~/.ssh/id_rsa"
+          for i in {1..10}; do
+            ssh ubuntu@$VM_IP "ssh-keyscan -f /home/ubuntu/playbooks/hosts.txt >> /home/ubuntu/.ssh/known_hosts" && break
+            echo "Retry $i: SSH not ready yet..."
+            sleep 5
+          done
+        
+      - name: Run playbook on ansible VM
+        env:
+          VM_IP: ${{ secrets.UA_FLOATING_IP }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          ssh ubuntu@$VM_IP "mv ~/playbooks/hosts.ini ~/hosts.ini"
+          ssh ubuntu@$VM_IP "ansible-playbook ~/playbooks/ansible_remove_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars='ACCESS_TOKEN=$ACCESS_TOKEN' --extra-vars='ORG=isisbusapps'"
+
+      - name: Delete OpenStack VMs
+        run: terraform plan -destroy -auto-approve 1> /dev/null
 
       - name: Put terraform.tfstate
         run: |
-          vault login ${{ secrets.VAULT_TOKEN }}
-          vault kv put -address="https://secrets.isis.rl.ac.uk" -mount="fase-ci-cd" "tfstate" tfstate="@terraform.tfstate"
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
+          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
+
+
+
+
       
 
 

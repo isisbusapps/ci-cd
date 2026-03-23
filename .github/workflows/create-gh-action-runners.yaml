@@ -16,10 +16,6 @@ on:
         description: "Name of image to create"
         required: true
         default: "static-gh-action-runner-image"
-  
-  push:
-    branches:
-      - CreateVMsWithGHActions
 
 jobs:
   apply-terraform:
@@ -78,11 +74,6 @@ jobs:
           vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
           vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-hosts" static-hosts="@../../playbooks/hosts.txt"
 
-      - name: Put terraform.tfstate
-        run: |
-          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
-          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
-
       - name: Setup SSH
         env:
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
@@ -124,3 +115,11 @@ jobs:
         run: |
           ssh ubuntu@$VM_IP "mv ~/playbooks/hosts.ini ~/hosts.ini"
           ssh ubuntu@$VM_IP "ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars='ACCESS_TOKEN=$ACCESS_TOKEN' --extra-vars='ORG=isisbusapps'"
+
+      - name: Delete ansible VM
+        run: terraform destroy -target="openstack_compute_instance_v2.configure" -auto-approve 1> /dev/null
+
+      - name: Put terraform.tfstate
+        run: |
+          vault login -address="${{ secrets.VAULT_URL }}" ${{ secrets.VAULT_TOKEN }} 1> /dev/null
+          vault kv put -address="${{ secrets.VAULT_URL }}" -mount="fase-ci-cd" "static-tfstate" static-tfstate="@terraform.tfstate"
