@@ -46,7 +46,7 @@ jobs:
         run: terraform init
 
       - name: Terraform plan
-        run: terraform plan -target="openstack_compute_instance_v2.configure" -out=tfplan 1> /dev/null
+        run: terraform plan -target="openstack_compute_instance_v2.configure" -target="openstack_compute_floatingip_associate_v2.fip_associate" -out=tfplan 1> /dev/null
 
       - name: Terraform apply
         run: terraform apply -auto-approve tfplan 1> /dev/null

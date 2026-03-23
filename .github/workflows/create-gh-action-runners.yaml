@@ -116,7 +116,7 @@ jobs:
           ssh ubuntu@$VM_IP "ansible-playbook ~/playbooks/ansible_install_github_actions_runner.yaml -i hosts.ini --private-key ~/.ssh/id_rsa --extra-vars='ACCESS_TOKEN=$ACCESS_TOKEN' --extra-vars='ORG=isisbusapps'"
 
       - name: Delete ansible VM
-        run: terraform destroy -target="openstack_compute_instance_v2.configure" -auto-approve 1> /dev/null
+        run: terraform destroy -target="openstack_compute_instance_v2.configure" -target="openstack_compute_floatingip_associate_v2.fip_associate" -auto-approve 1> /dev/null
 
       - name: Put terraform.tfstate
         run: |
