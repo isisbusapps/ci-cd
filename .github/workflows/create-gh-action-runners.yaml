@@ -15,7 +15,7 @@ on:
       image_name:
         description: "Name of image to create"
         required: true
-        default: "static-gh-action-runner-image"
+        default: "gh-action-runner-image"
     
   push:
     branches:
@@ -30,7 +30,7 @@ jobs:
       vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
-      IMAGE_NAME: ${{ github.events.inputs.image_name }}
+      IMAGE_NAME: gh-action-runner-image
       FLAVOR_NAME: l3.nano
       TF_VAR_runner_count: 3 #${{ github.events.inputs.runner_count }}
       TF_VAR_flavor_name: l3.nano #${{ github.events.inputs.runner_flavor }}
