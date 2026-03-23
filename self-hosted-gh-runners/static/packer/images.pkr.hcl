@@ -65,10 +65,18 @@ build {
         script = "../../scripts/packer-scripts/setup_gh_runner_vm.sh"
     }
 
+    provisioner "shell" {
+        inline = [ "sudo systemctl stop unnatended-upgrades"]
+    }
+
     provisioner "ansible-local" {
         playbook_file = "../../playbooks/install_dependencies.yaml"
         extra_arguments = ["--extra-vars", "RUNNER_VERSION=${var.runner_version}"]
-    }  
+    }
+
+    provisioner "shell" {
+        inline = [ "sudo systemctl start unnatended-upgrades"]
+    }
 }
 
 build {
