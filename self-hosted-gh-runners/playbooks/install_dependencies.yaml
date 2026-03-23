@@ -38,4 +38,4 @@
     - name: Install dependencies
       ansible.builtin.shell:
         chdir: ~/actions-runner
-        cmd: sudo ./bin/installdependencies.sh
+        cmd: ./bin/installdependencies.sh
