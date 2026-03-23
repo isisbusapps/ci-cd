@@ -66,7 +66,7 @@ build {
     }
 
     provisioner "ansible-local" {
-        playbook_file = "../../playbooks/install_dependencies.yaml"
+        playbook_file = "../../playbooks/ansible_install_dependencies.yaml"
         extra_arguments = ["--extra-vars", "RUNNER_VERSION=${var.runner_version}"]
     }
 }
