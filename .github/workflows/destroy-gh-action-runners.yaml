@@ -1,6 +1,9 @@
 name: GH Runners Static Destroy
 on: 
   workflow_dispatch:
+  push:
+    branches:
+      - CreateVMsWithGHActions
 
 jobs:
   apply-terraform:
@@ -8,9 +11,6 @@ jobs:
     defaults:
       run:
         working-directory: self-hosted-gh-runners/static/terraform
-        push:
-          branches:
-            - CreateVMsWithGHActions
     outputs:
       vm_ips: ${{ steps.check-vms.outputs.vm-ips }}
     env:
