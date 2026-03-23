@@ -11,9 +11,7 @@ on:
         description: "The Flavor of VM to create. l3.nano (More Runners, Less Power) | l3.micro (Middle Ground) | l3.tiny (Less Runners, More Power)"
         required: true
         default: l3.nano
-  push:
-    branches:
-      - CreateVMsWithGHActions
+
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
