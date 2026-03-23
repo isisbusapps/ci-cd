@@ -60,6 +60,8 @@ jobs:
         env:
           FASE_SSH_KEY: ${{ secrets.FASE_DEV_SSH_KEY }}
         run: |
+          echo "[servers]" > ../../playbooks/hosts.ini
+          cat ../../playbooks/hosts.txt >> ../../playbooks/hosts.ini
           mkdir -p ~/.ssh/
           echo -e "$FASE_SSH_KEY" >> ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
