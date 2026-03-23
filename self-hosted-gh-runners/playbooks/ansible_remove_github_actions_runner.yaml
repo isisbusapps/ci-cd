@@ -19,6 +19,9 @@
           - ./svc.sh
           - uninstall
 
+    - name: Change execution of remove scripts
+      file: dest=~/setup-scripts/remove.sh mode=+x
+
     - name: Extract & Configure the runner
       ansible.builtin.command:
         argv:
