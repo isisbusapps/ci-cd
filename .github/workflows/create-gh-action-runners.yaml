@@ -11,9 +11,7 @@ on:
         description: "The Flavor of VM to create. l3.nano (More Runners, Less Power) | l3.micro (Middle Ground) | l3.tiny (Less Runners, More Power)"
         required: true
         default: l3.nano
-  push:
-    branches:
-      - CreateVMsWithGHActions
+
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
@@ -25,8 +23,8 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       FLAVOR_NAME: l3.nano
-      TF_VAR_runner_count: 5 #${{ github.events.inputs.runner_count }}
-      TF_VAR_flavor_name: l3.nano #${{ github.events.inputs.runner_flavor }}
+      TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
+      TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
       TF_VAR_floating_ip: ${{ secrets.UA_FLOATING_IP }}
     steps:
       - name: Checkout repo
