@@ -37,7 +37,7 @@
 
     - name: Check Automatic Updates
       ansible.builtin.shell:
-        cmd: sudo sytemctl status unattended-upgrades
+        cmd: sudo systemctl status unattended-upgrades
     
     - name: Install dependencies
       ansible.builtin.shell:
