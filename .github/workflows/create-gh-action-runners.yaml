@@ -98,6 +98,7 @@ jobs:
         env:
           VM_IP: ${{ secrets.UA_FLOATING_IP }}
         run: |
+          eval `ssh-agent -s`
           for i in {1..10}; do
             ssh-keyscan -H "$VM_IP" >> ~/.ssh/known_hosts && break
             echo "Retry $i: SSH not ready yet..."
