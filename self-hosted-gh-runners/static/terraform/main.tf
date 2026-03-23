@@ -3,7 +3,7 @@ provider "openstack" {
 }
 
 data "openstack_images_image_ids_v2" "runner_image" {
-    name = "static-gh-action-runner-image"
+    name = "gh-action-runner-image"
     sort = "updated_at"
 }
 
