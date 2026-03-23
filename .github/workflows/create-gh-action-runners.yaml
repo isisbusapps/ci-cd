@@ -100,6 +100,7 @@ jobs:
         run: |
           eval $(ssh-agent -s)
           for i in {1..10}; do
+            eval $(ssh-agent -s)
             ssh-keyscan -H "$VM_IP" >> ~/.ssh/known_hosts && break
             echo "Retry $i: SSH not ready yet..."
             sleep 5
