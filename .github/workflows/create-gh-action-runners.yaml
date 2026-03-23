@@ -12,9 +12,6 @@ on:
         required: true
         default: l3.nano
     
-  push:
-    branches:
-      - CreateVMsWithGHActions
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest

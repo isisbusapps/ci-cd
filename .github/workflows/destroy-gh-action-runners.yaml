@@ -1,7 +1,9 @@
 name: GH Runners Static Destroy
 on: 
   workflow_dispatch:
-
+  push:
+    branches:
+      - CreateVMsWithGHActions
 jobs:
   apply-terraform:
     runs-on: ubuntu-latest
