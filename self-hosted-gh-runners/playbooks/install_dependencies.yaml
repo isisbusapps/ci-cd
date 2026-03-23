@@ -34,6 +34,10 @@
         src: https://github.com/actions/runner/releases/download/v{{RUNNER_VERSION}}/actions-runner-linux-x64-{{RUNNER_VERSION}}.tar.gz
         dest: ~/actions-runner
         remote_src: yes
+
+    - name: Check Automatic Updates
+      ansible.builtin.shell:
+        cmd: sudo sytemctl status unattended-upgrades
     
     - name: Install dependencies
       ansible.builtin.shell:
