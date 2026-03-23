@@ -37,5 +37,6 @@
     
     - name: Install dependencies
       ansible.builtin.shell:
+        become: true
         chdir: ~/actions-runner
         cmd: sudo ./bin/installdependencies.sh
