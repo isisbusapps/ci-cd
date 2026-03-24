@@ -19,7 +19,7 @@
           - ./svc.sh
           - uninstall
 
-    - name: Extract & Configure the runner
+    - name: Remove the runner
       ansible.builtin.command:
         argv:
           - /home/ubuntu/setup-scripts/remove.sh

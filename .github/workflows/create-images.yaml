@@ -1,25 +1,20 @@
 name: GH Runners Static Image
 on:
-  workflow-dispatch:
-    inputs:
-      image_name:
-        description: "Name of image to create"
-        required: true
-        default: "static-gh-action-runner-image"
+  workflow_dispatch:
 
 jobs:
   packer:
     runs-on: ubuntu-latest
     defaults:
       run: 
-        working-directory: self-hosted-gh-runners/static/packer
+        working-directory: self-hosted-gh-runners/static/packer/
     env:
       OS_CLOUD: openstack
-      IMAGE_NAME: ${{ github.events.inputs.image_name }}
+      IMAGE_NAME: gh-action-runner-image
       BASE_IMAGE_NAME: ubuntu-noble-24.04-nogui
       FLAVOR_NAME: l3.nano
       NETWORK_NAME: ua-ci-cd
-      FLOATING_IP: ${{ secrets.PACKER_FLOATING_IP }}
+      FLOATING_IP: ${{ secrets.UA_FLOATING_IP }}
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       GITHUB_ORG: ${{ github.repository_owner }}
     
@@ -81,7 +76,10 @@ jobs:
         RUNNER_VERSION: ${{ steps.get-runner-version.outputs.runner_version }}
       run: |
         packer validate .
-        packer build .
+        packer build -parallel-builds=1 .
 
     - name: Delete old images
-      run: ../../scripts/packer-scripts/delete_old_images.sh
+      run: |
+        cd ../../scripts/packer-scripts/
+        chmod +x delete_old_images.sh
+        ./delete_old_images.sh

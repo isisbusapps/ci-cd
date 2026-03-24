@@ -12,6 +12,8 @@ sudo chmod +x ~/runner-scripts/job_completed.sh
 sudo chown ubuntu:ubuntu ~/runner-scripts/job_started.sh
 sudo chown ubuntu:ubuntu ~/runner-scripts/job_completed.sh
 
+sudo chmod -R +x ~/setup-scripts/
+
 sudo cp ~/setup-scripts/docker_prune.sh /etc/cron.daily/docker_prune.sh
 sudo chmod +x /etc/cron.daily/docker_prune.sh
 
