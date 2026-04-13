@@ -90,8 +90,13 @@ jobs:
           file: ${{ inputs.dockerfile-path }}
           push: true
           tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.release-version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+     - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   update_gitops:
     name: Update GitOps Repository
