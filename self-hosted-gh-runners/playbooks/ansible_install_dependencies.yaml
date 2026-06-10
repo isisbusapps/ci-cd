@@ -45,16 +45,19 @@
         mode: "0755"
     
     - name: Download repo signing key
+      become: true
       ansible.builtin.get_url:
         url: "https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key"
         dest: /etc/apt/keyringskubernetes-release.key
         mode: "0644"
 
     - name: De armour key into keyring
+      become: true
       ansible.builtin.command:
         cmd: "gpg --dearmor -o /etc/apt/keyringskubernetes-release.key"
 
     - name: Ensure keyring is world-readable
+      become: true
       ansible.builtin.file:
         path: "/etc/apt/keyringskubernetes-release.key"
         mode: "0644"
