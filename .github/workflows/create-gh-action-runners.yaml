@@ -51,7 +51,7 @@ jobs:
 
       - name: Terraform plan
         run: | 
-          echo $TF_VAR_runner_count
+          echo "$TF_VAR_runner_count"
           terraform plan -out=tfplan 1> /dev/null
 
       - name: Terraform apply
