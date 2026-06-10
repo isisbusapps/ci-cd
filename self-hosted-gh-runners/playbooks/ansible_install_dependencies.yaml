@@ -46,23 +46,22 @@
     
     - name: Download repo signing key
       ansible.builtin.get_url:
-        url: "https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor }}/deb/Release.key"
-        dest: /tmp/kubernetes-release.key
+        url: "https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key"
+        dest: /etc/apt/keyringskubernetes-release.key
         mode: "0644"
 
     - name: De armour key into keyring
       ansible.builtin.command:
-        cmd: "gpg --dearmor -o {{ keyring_path }} /tmp/kubernetes-release.key"
-        creates: "{{ keyring_path }}"
+        cmd: "gpg --dearmor -o /etc/apt/keyringskubernetes-release.key"
 
     - name: Ensure keyring is world-readable
       ansible.builtin.file:
-        path: "{{ keyring_path }}"
+        path: "/etc/apt/keyringskubernetes-release.key"
         mode: "0644"
  
     - name: Add the Kubernetes apt repository
       ansible.builtin.apt_repository:
-        repo: "deb [signed-by={{ keyring_path }}] https://pkgs.k8s.io/core:/stable:/{{ kubectl_minor }}/deb/ /"
+        repo: "deb [signed-by=/etc/apt/keyringskubernetes-release.key] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /"
         filename: kubernetes
         state: present
 
