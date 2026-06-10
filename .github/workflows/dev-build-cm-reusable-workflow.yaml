@@ -8,20 +8,19 @@ on:
         required: true
         type: string
       configmap_file:
-        description: "Repo-relative path to the ConfigMap manifest"
+        description: 'Repo-relative path to the ConfigMap manifest'
         type: string
         required: true
       configmap_name:
-        description: "Name of the Config map"
+        description: 'Name of the Config map'
         type: string
         required: true  
       data_key:
-        description: >
-          The key under which the file content appears in ConfigMap .data.         
+        description: 'The key under which the file content appears in ConfigMap .data.'
         type: string
         required: true         
       namespace:
-        description: "Kubernetes namespace. Defaults to the apps  if omitted."
+        description: 'Kubernetes namespace. Defaults to the apps  if omitted.'
         type: string
         required: true       
       gitops-repo:
@@ -29,10 +28,10 @@ on:
         type: string
         default: 'isisbusapps/gitops'
       runner_label:
-        description: "Self-hosted runner label to target (e.g. 'self-hosted' or 'k8s-prod-runner')"
+        description: 'Self-hosted runner label to target e.g. self-hosted or k8s-prod-runner)'
         type: string
         required: false
-        default: "self-hosted" 
+        default: 'self-hosted' 
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -40,10 +39,10 @@ on:
 
   outputs:
     configmap_output_name:
-      description: "Name of the ConfigMap that was created/updated"
+      description: 'Name of the ConfigMap that was created/updated'
       value: ${{ jobs.generate-configmap.outputs.configmap_name }}
     data_key_used:       
-      description: "The .data key the file was stored under"
+      description: 'The .data key the file was stored under'
       value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
 
 jobs:
@@ -121,7 +120,7 @@ jobs:
           KEY="${{ steps.resolve.outputs.data_key }}"
           FILE="${{ inputs.yaml_file }}"
  
-          echo "🔧 Generating ConfigMap manifest..."
+          echo "Generating ConfigMap manifest..."
  
           kubectl create configmap "${CM}" \
             --from-file="${KEY}=${FILE}" \
