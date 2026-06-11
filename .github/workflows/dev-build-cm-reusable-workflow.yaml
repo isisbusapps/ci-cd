@@ -49,6 +49,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       packages: write
+      contents: read
     
     outputs:
       configmap_name: ${{ steps.resolve.outputs.configmap_name }}
