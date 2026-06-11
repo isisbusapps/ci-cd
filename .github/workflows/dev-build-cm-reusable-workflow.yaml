@@ -114,5 +114,12 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          # 2. COPY the file from the /tmp directory into this GitOps repository folder          
+          cp /tmp/configmap-generated.yaml ./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps/configmap-generated.yaml
+
+          # 3. STAGE the new or modified file so Git tracks it
+          git add ./configmap-generated.yaml
+
           git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ github.event.head_commit.url }}"
           git push
