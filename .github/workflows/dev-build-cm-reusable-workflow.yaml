@@ -102,8 +102,7 @@ jobs:
 
       - name: Generate ConfigMap manifest
         id: generate
-        run: |
-          NS="${{ steps.resolve.outputs.namespace }}"
+        run: |          
           CM="${{ steps.resolve.outputs.configmap_name }}"
           KEY="${{ steps.resolve.outputs.data_key }}"
           FILE="${{ inputs.configmap_file }}"
@@ -111,7 +110,7 @@ jobs:
           echo "Generating ConfigMap manifest..."
  
           kubectl create configmap "${CM}" \
-            --from-file="${KEY}=${FILE}" \           
+            --from-file="${FILE}" \           
             --dry-run=client \
             -o yaml > /tmp/configmap-generated.yaml
  
