@@ -92,11 +92,7 @@ jobs:
  
           echo "Generating ConfigMap manifest..."
  
-          kubectl create configmap "${CM}" \
-            --from-file="${FILE}" \           
-            --dry-run=client \
-            -o yaml > /tmp/configmap-generated.yaml
- 
+          kubectl create cm "${CM}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/configmap-generated.yaml
           echo "============= Generated manifest==================="
           cat /tmp/configmap-generated.yaml
           echo "===================================================" 
