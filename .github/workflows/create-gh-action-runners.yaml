@@ -6,6 +6,7 @@ on:
         description: "Number of Runners to Deploy"
         required: true
         default: 5
+        type: number
 
       runner_flavor:
         description: "The Flavor of VM to create. l3.nano (More Runners, Less Power) | l3.micro (Middle Ground) | l3.tiny (Less Runners, More Power)"
@@ -23,8 +24,8 @@ jobs:
     env:
       OS_CLIENT_CONFIG_FILE: ${{ github.workspace }}/clouds.yaml
       FLAVOR_NAME: l3.nano
-      TF_VAR_runner_count: ${{ github.events.inputs.runner_count }}
-      TF_VAR_flavor_name: ${{ github.events.inputs.runner_flavor }}
+      TF_VAR_runner_count: ${{ inputs.runner_count }}
+      TF_VAR_flavor_name: ${{ inputs.runner_flavor }}
       TF_VAR_floating_ip: ${{ secrets.UA_FLOATING_IP }}
     steps:
       - name: Checkout repo
@@ -49,7 +50,9 @@ jobs:
         run: terraform init
 
       - name: Terraform plan
-        run: terraform plan -out=tfplan 1> /dev/null
+        run: | 
+          echo "$TF_VAR_runner_count"
+          terraform plan -out=tfplan 1> /dev/null
 
       - name: Terraform apply
         run: terraform apply -auto-approve tfplan 1> /dev/null
