@@ -18,11 +18,8 @@ on:
       data_key:
         description: 'The key under which the file content appears in ConfigMap .data.'
         type: string
-        required: true         
-      namespace:
-        description: 'Kubernetes namespace. Defaults to the apps  if omitted.'
-        type: string
-        required: true       
+        required: true        
+         
       gitops-repo:
         required: false
         type: string
@@ -37,25 +34,25 @@ on:
         description: 'PAT with repo+workflow scope for the GitOps repo'
         required: true
 
-  outputs:
-    configmap_output_name:
-      description: 'Name of the ConfigMap that was created/updated'
-      value: ${{ jobs.generate-configmap.outputs.configmap_name }}
-    data_key_used:       
-      description: 'The .data key the file was stored under'
-      value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
+    outputs:
+      configmap_output_name:
+        description: 'Name of the ConfigMap that was created/updated'
+        value: ${{ jobs.generate-configmap.outputs.configmap_name }}
+      data_key_used:
+        description: 'The .data key the file was stored under'
+        value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
 
 jobs:
-  generate-configmap::
+  generate-configmap:
     name: Generate & Commit ConfigMap
-    runs-on: ${{ inputs.runner_label }}
-    
+    runs-on: ${{ inputs.runner_label }}    
     timeout-minutes: 30
-
     permissions:
       packages: write
-
-    configmap_name: ${{ steps.resolve.outputs.configmap_name }}
+    
+    outputs:
+      configmap_name: ${{ steps.resolve.outputs.configmap_name }}
+      data_key_used: ${{ steps.resolve.outputs.data_key }}   
 
     steps:
       - name: Checkout source repository
@@ -80,14 +77,6 @@ jobs:
       - name: Resolve parameters
         id: resolve
         run: |
-          # Namespace
-          if [[ -n "${{ inputs.namespace }}" ]]; then
-            NS="${{ inputs.namespace }}"
-          else
-            echo "::error::The namespace input cannot be empty!"
-            exit 1
-          fi
- 
           # Data key
           if [[ -n "${{ inputs.data_key }}" ]]; then
             KEY="${{ inputs.data_key }}"
@@ -102,14 +91,12 @@ jobs:
           else
             echo "::error::The configmap name cannot be empty!"
             exit 1
-          fi       
- 
-          echo "namespace=${NS}"       >> "$GITHUB_OUTPUT"
+          fi  
+         
           echo "data_key=${KEY}"       >> "$GITHUB_OUTPUT"
           echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT"
  
           echo "ConfigMap name : ${CM}"
-          echo "Namespace      : ${NS}"
           echo "Data key       : ${KEY}" 
 
       - name: Generate ConfigMap manifest
@@ -118,13 +105,12 @@ jobs:
           NS="${{ steps.resolve.outputs.namespace }}"
           CM="${{ steps.resolve.outputs.configmap_name }}"
           KEY="${{ steps.resolve.outputs.data_key }}"
-          FILE="${{ inputs.yaml_file }}"
+          FILE="${{ inputs.configmap_file }}"
  
           echo "Generating ConfigMap manifest..."
  
           kubectl create configmap "${CM}" \
-            --from-file="${KEY}=${FILE}" \
-            --namespace "${NS}" \
+            --from-file="${KEY}=${FILE}" \           
             --dry-run=client \
             -o yaml > /tmp/configmap-generated.yaml
  
@@ -136,7 +122,7 @@ jobs:
     name: Update GitOps Repository
     runs-on: self-hosted
     timeout-minutes: 10
-    needs: build_and_push
+    needs: generate-configmap
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout GitOps repository
