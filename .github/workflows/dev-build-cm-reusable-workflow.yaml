@@ -14,12 +14,7 @@ on:
       configmap_name:
         description: 'Name of the Config map'
         type: string
-        required: true  
-      data_key:
-        description: 'The key under which the file content appears in ConfigMap .data.'
-        type: string
-        required: true        
-         
+        required: true 
       gitops-repo:
         required: false
         type: string
@@ -78,33 +73,21 @@ jobs:
       - name: Resolve parameters
         id: resolve
         run: |
-          # Data key
-          if [[ -n "${{ inputs.data_key }}" ]]; then
-            KEY="${{ inputs.data_key }}"
-          else
-            echo "::error::The data key input cannot be empty!"
-            exit 1
-          fi
-
           # Config Map
           if [[ -n "${{ inputs.configmap_name }}" ]]; then
             CM="${{ inputs.configmap_name }}"
           else
             echo "::error::The configmap name cannot be empty!"
             exit 1
-          fi  
-         
-          echo "data_key=${KEY}"       >> "$GITHUB_OUTPUT"
-          echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT"
- 
+          fi   
+          echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT" 
           echo "ConfigMap name : ${CM}"
-          echo "Data key       : ${KEY}" 
+         
 
       - name: Generate ConfigMap manifest
         id: generate
         run: |          
-          CM="${{ steps.resolve.outputs.configmap_name }}"
-          KEY="${{ steps.resolve.outputs.data_key }}"
+          CM="${{ steps.resolve.outputs.configmap_name }}"          
           FILE="${{ inputs.configmap_file }}"
  
           echo "Generating ConfigMap manifest..."
