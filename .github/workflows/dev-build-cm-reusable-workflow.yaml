@@ -123,6 +123,19 @@ jobs:
           name: configmap-${{ inputs.app-name }}
           path: /tmp/
 
+      
+      - name: Debug - find artifact
+        run: |
+          ls -la
+          ls -la /tmp/
+
+          # check the entire workspace
+          find $GITHUB_WORKSPACE -name "*.yaml" 2>/dev/null
+
+          # check where download-artifact actually put it
+          find / -name "configmap-generated.yaml" 2>/dev/null 
+          find / -name "configmap-generated.yaml" 2>/dev/null    
+
       - name: Copy, Commit and push changes
         run: |
           cd gitops
