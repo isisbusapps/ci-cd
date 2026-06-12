@@ -14,12 +14,7 @@ on:
       configmap_name:
         description: 'Name of the Config map'
         type: string
-        required: true  
-      data_key:
-        description: 'The key under which the file content appears in ConfigMap .data.'
-        type: string
-        required: true        
-         
+        required: true 
       gitops-repo:
         required: false
         type: string
@@ -49,6 +44,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       packages: write
+      contents: read
     
     outputs:
       configmap_name: ${{ steps.resolve.outputs.configmap_name }}
@@ -77,46 +73,34 @@ jobs:
       - name: Resolve parameters
         id: resolve
         run: |
-          # Data key
-          if [[ -n "${{ inputs.data_key }}" ]]; then
-            KEY="${{ inputs.data_key }}"
-          else
-            echo "::error::The data key input cannot be empty!"
-            exit 1
-          fi
-
-          # Config Map
           if [[ -n "${{ inputs.configmap_name }}" ]]; then
             CM="${{ inputs.configmap_name }}"
           else
             echo "::error::The configmap name cannot be empty!"
             exit 1
-          fi  
-         
-          echo "data_key=${KEY}"       >> "$GITHUB_OUTPUT"
-          echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT"
- 
+          fi   
+          echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT" 
           echo "ConfigMap name : ${CM}"
-          echo "Data key       : ${KEY}" 
+         
 
       - name: Generate ConfigMap manifest
         id: generate
-        run: |
-          NS="${{ steps.resolve.outputs.namespace }}"
-          CM="${{ steps.resolve.outputs.configmap_name }}"
-          KEY="${{ steps.resolve.outputs.data_key }}"
+        run: |          
+          CM="${{ steps.resolve.outputs.configmap_name }}"          
           FILE="${{ inputs.configmap_file }}"
  
           echo "Generating ConfigMap manifest..."
  
-          kubectl create configmap "${CM}" \
-            --from-file="${KEY}=${FILE}" \           
-            --dry-run=client \
-            -o yaml > /tmp/configmap-generated.yaml
- 
+          kubectl create cm "${CM}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/configmap-generated.yaml
           echo "============= Generated manifest==================="
           cat /tmp/configmap-generated.yaml
           echo "===================================================" 
+      
+      - name: Upload generated configmap
+        uses: actions/upload-artifact@v7
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/configmap-generated.yaml  
 
   update_gitops:
     name: Update GitOps Repository
@@ -130,10 +114,22 @@ jobs:
         with:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
+          path: gitops
 
-      - name: Commit and push changes
+      - name: Download generated configmap
+        uses: actions/download-artifact@v8
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/
+
+      - name: Copy, Commit and push changes
         run: |
+          cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ github.event.head_commit.url }}"
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"                  
+          cp /tmp/configmap-generated.yaml "${TARGET_DIR}/configmap-generated.yaml"          
+          git add "${TARGET_DIR}/configmap-generated.yaml"          
+          GITOPS_SHA=$(git rev-parse --short HEAD)
+          git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           git push
