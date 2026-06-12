@@ -133,5 +133,6 @@ jobs:
 
           # 3. STAGE the new or modified file so Git tracks it
           git add ./configmap-generated.yaml          
-          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ git rev-parse --short HEAD }} - src: ${{ github.event.head_commit.url }}"
+          GITOPS_SHA=$(git rev-parse --short HEAD)
+          git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           git push
