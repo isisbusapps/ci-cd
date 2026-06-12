@@ -73,7 +73,6 @@ jobs:
       - name: Resolve parameters
         id: resolve
         run: |
-          # Config Map
           if [[ -n "${{ inputs.configmap_name }}" ]]; then
             CM="${{ inputs.configmap_name }}"
           else
@@ -98,7 +97,7 @@ jobs:
           echo "===================================================" 
       
       - name: Upload generated configmap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: configmap-${{ inputs.app-name }}
           path: /tmp/configmap-generated.yaml  
@@ -118,7 +117,7 @@ jobs:
           path: gitops
 
       - name: Download generated configmap
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: configmap-${{ inputs.app-name }}
           path: /tmp/
@@ -128,11 +127,8 @@ jobs:
           cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"
-          # 2. COPY the file from the /tmp directory into this GitOps repository folder          
-          cp /tmp/configmap-generated.yaml "${TARGET_DIR}/configmap-generated.yaml"
-
-          # 3. STAGE the new or modified file so Git tracks it
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"                  
+          cp /tmp/configmap-generated.yaml "${TARGET_DIR}/configmap-generated.yaml"          
           git add "${TARGET_DIR}/configmap-generated.yaml"          
           GITOPS_SHA=$(git rev-parse --short HEAD)
           git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
