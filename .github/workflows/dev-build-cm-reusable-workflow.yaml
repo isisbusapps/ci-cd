@@ -123,8 +123,7 @@ jobs:
           path: /tmp/
 
       - name: Copy, Commit and push changes
-        run: |
-          cd gitops
+        run: |          
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"
