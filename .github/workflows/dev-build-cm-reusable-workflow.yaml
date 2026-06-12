@@ -123,19 +123,6 @@ jobs:
           name: configmap-${{ inputs.app-name }}
           path: /tmp/
 
-      
-      - name: Debug - find artifact
-        run: |
-          ls -la
-          ls -la /tmp/
-
-          # check the entire workspace
-          find $GITHUB_WORKSPACE -name "*.yaml" 2>/dev/null
-
-          # check where download-artifact actually put it
-          find / -name "configmap-generated.yaml" 2>/dev/null 
-          find / -name "configmap-generated.yaml" 2>/dev/null    
-
       - name: Copy, Commit and push changes
         run: |
           cd gitops
@@ -143,10 +130,10 @@ jobs:
           git config --local user.name "GitHub Action"
           TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"
           # 2. COPY the file from the /tmp directory into this GitOps repository folder          
-          cp /tmp/configmap-generated.yaml ${TARGET_DIR}/configmap-generated.yaml
+          cp /tmp/configmap-generated.yaml "${TARGET_DIR}/configmap-generated.yaml"
 
           # 3. STAGE the new or modified file so Git tracks it
-          git add ./configmap-generated.yaml          
+          git add "${TARGET_DIR}/configmap-generated.yaml"          
           GITOPS_SHA=$(git rev-parse --short HEAD)
           git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           git push
