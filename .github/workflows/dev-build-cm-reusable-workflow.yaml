@@ -115,6 +115,7 @@ jobs:
         with:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
+          path: gitops
 
       - name: Download generated configmap
         uses: actions/download-artifact@v4
@@ -123,7 +124,8 @@ jobs:
           path: /tmp/
 
       - name: Copy, Commit and push changes
-        run: |          
+        run: |
+          cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"
