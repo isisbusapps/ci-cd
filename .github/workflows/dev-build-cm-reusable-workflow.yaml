@@ -132,7 +132,6 @@ jobs:
           cp /tmp/configmap-generated.yaml ${TARGET_DIR}/configmap-generated.yaml
 
           # 3. STAGE the new or modified file so Git tracks it
-          git add ./configmap-generated.yaml
-          GITOPS_SHA=$(git rev-parse --short HEAD)
-          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{GITOPS_SHA }} - src: ${{ github.event.head_commit.url }}"
+          git add ./configmap-generated.yaml          
+          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ git rev-parse --short HEAD }} - src: ${{ github.event.head_commit.url }}"
           git push
