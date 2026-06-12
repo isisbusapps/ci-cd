@@ -96,6 +96,12 @@ jobs:
           echo "============= Generated manifest==================="
           cat /tmp/configmap-generated.yaml
           echo "===================================================" 
+      
+      - name: Upload generated configmap
+        uses: actions/upload-artifact@v4
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/configmap-generated.yaml  
 
   update_gitops:
     name: Update GitOps Repository
@@ -109,6 +115,12 @@ jobs:
         with:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
+
+      - name: Download generated configmap
+        uses: actions/download-artifact@v4
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/
 
       - name: Copy, Commit and push changes
         run: |
