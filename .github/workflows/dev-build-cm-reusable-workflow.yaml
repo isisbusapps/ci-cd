@@ -110,16 +110,17 @@ jobs:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
 
-      - name: Commit and push changes
+      - name: Copy, Commit and push changes
         run: |
+          cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"
           # 2. COPY the file from the /tmp directory into this GitOps repository folder          
-          cp /tmp/configmap-generated.yaml ./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps/configmap-generated.yaml
+          cp /tmp/configmap-generated.yaml ${TARGET_DIR}/configmap-generated.yaml
 
           # 3. STAGE the new or modified file so Git tracks it
           git add ./configmap-generated.yaml
-
-          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{ github.event.head_commit.url }}"
+          GITOPS_SHA=$(git rev-parse --short HEAD)
+          git commit -am "[CD] Update ${{ inputs.app-name }} with this commit ${{GITOPS_SHA }} - src: ${{ github.event.head_commit.url }}"
           git push
