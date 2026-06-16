@@ -44,7 +44,12 @@ on:
       ishelm-deployment:
         required: false
         type: boolean
-        default: false  
+        default: false
+      version-tag:
+        description: 'Optional image tag to use instead of digest (e.g. 1.2.3). If omitted, the image digest is used.'
+        required: false
+        type: string
+        default: ''
     secrets:
       workflow-token:
         required: true
@@ -122,12 +127,21 @@ jobs:
         run: |
           sed -i 's/# version: .*/# version: ${{ inputs.release-version }}/' './${{ inputs.gitops-patch-path }}'
 
+      - name: Resolve image reference
+        id: resolve_image
+        run: |
+          if [[ -n "${{ inputs.version-tag }}" ]]; then
+            echo "image-ref=${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.version-tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "image-ref=${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Update image reference
         uses: mikefarah/yq@v4.48.1
         if: ${{ !inputs.ishelm-deployment }}
-        with:        
+        with:
           cmd: |
-            yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+            yq e -i '.spec.template.spec.containers[0].image = "${{ steps.resolve_image.outputs.image-ref }}"' \
               './${{ inputs.gitops-patch-path }}'
 
       - name: Update image reference for helm deployment
@@ -136,7 +150,7 @@ jobs:
         with:
           cmd: |
             yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-              './${{ inputs.gitops-patch-path }}'        
+              './${{ inputs.gitops-patch-path }}'
 
       - name: Commit and push changes
         run: |
