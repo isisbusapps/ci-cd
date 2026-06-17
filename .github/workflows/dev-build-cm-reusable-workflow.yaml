@@ -85,22 +85,21 @@ jobs:
 
       - name: Generate ConfigMap manifest
         id: generate
-        run: |          
-          CM="${{ steps.resolve.outputs.configmap_name }}"          
+        run: |      
           FILE="${{ inputs.configmap_file }}"
  
           echo "Generating ConfigMap manifest..."
  
-          kubectl create cm "${CM}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/"${CM}".yaml
+          kubectl create cm "${{ inputs.configmap_name }}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/"${{ inputs.configmap_name }}".yaml
           echo "============= Generated manifest==================="
-          cat /tmp/"${CM}".yaml
+          cat /tmp/"${{ inputs.configmap_name }}".yaml
           echo "===================================================" 
       
       - name: Upload generated configmap
         uses: actions/upload-artifact@v7
         with:
           name: configmap-${{ inputs.app-name }}
-          path: /tmp/"${CM}".yaml  
+          path: /tmp/"${{ inputs.configmap_name }}".yaml  
 
   update_gitops:
     name: Update GitOps Repository
@@ -127,7 +126,8 @@ jobs:
           cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps"                  
+          CM="${{ inputs.configmap_name }}"
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps-dev"                  
           cp /tmp/"${CM}".yaml "${TARGET_DIR}/${CM}.yaml"          
           git add "${TARGET_DIR}/${CM}.yaml"
           GITOPS_SHA=$(git rev-parse --short HEAD)
