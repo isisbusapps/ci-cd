@@ -45,6 +45,11 @@ on:
         required: false
         type: boolean
         default: false
+      build-args:
+        description: 'Optional dockerfile arguments'
+        required: false
+        type: string
+        default: ''
       version-tag:
         description: 'Optional image tag to use instead of digest (e.g. 1.2.3). If omitted, the image digest is used.'
         required: false
@@ -97,6 +102,7 @@ jobs:
           tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.release-version }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: ${{ inputs.build-args }}
 
       - name: Move cache
         run: |

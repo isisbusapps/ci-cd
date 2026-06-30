@@ -13,7 +13,7 @@ on:
         type: string
       gitops-patch-path:
         description: 'Relative path in gitops repo to dev patch-image.yml'
-        required: true        
+        required: true
         type: string
       use-dockerhub-mirror:
         description: 'Use dockerhub.stfc.ac.uk as a Docker Hub pull-through cache'
@@ -39,7 +39,12 @@ on:
       ishelm-deployment:
         required: false
         type: boolean
-        default: false    
+        default: false
+      build-args:
+        description: 'Optional dockerfile arguments'
+        required: false
+        type: string
+        default: ''
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -88,6 +93,7 @@ jobs:
           tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:dev
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: ${{ inputs.build-args }}
 
       - name: Move cache
         run: |
