@@ -53,7 +53,7 @@ on:
 jobs:
   build_and_push:
     name: Build and Push Container
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox-dind
     timeout-minutes: 30
     permissions:
       packages: write
@@ -102,7 +102,8 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 10
     needs: build_and_push
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'

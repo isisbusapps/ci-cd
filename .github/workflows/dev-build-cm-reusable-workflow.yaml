@@ -20,10 +20,10 @@ on:
         type: string
         default: 'isisbusapps/gitops'
       runner_label:
-        description: 'Self-hosted runner label to target e.g. self-hosted or k8s-prod-runner)'
+        description: 'isisbusapps-proxmox runner label to target e.g. isisbusapps-proxmox or k8s-prod-runner)'
         type: string
         required: false
-        default: 'self-hosted' 
+        default: 'isisbusapps-proxmox' 
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -40,7 +40,8 @@ on:
 jobs:
   generate-configmap:
     name: Generate & Commit ConfigMap
-    runs-on: ${{ inputs.runner_label }}    
+    runs-on: ${{ inputs.runner_label }}
+    container: ubuntu:latest    
     timeout-minutes: 30
     permissions:
       packages: write
@@ -103,7 +104,8 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 10
     needs: generate-configmap
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
