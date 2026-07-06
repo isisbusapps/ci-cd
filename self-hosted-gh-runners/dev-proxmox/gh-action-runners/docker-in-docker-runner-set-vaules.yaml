@@ -1,0 +1,67 @@
+githubConfigUrl: "https://github.com/isisbusapps"
+githubConfigSecret: isisbusapps-gh-runners
+runnerScaleSetName: "isisbusapps-proxmox-dind"
+
+minRunners: 0
+maxRunners: 5
+
+containerMode:
+  type: "dind"
+  kubernetesModeWorkVolumeClaim:
+    accessModes: ["ReadWriteOnce"]
+    storageClassName: "longhorn"
+    resources:
+      requests:
+        storage: 2Gi
+
+listenerMetrics:
+  counters:
+    gha_started_jobs_total:
+      labels: ["repository", "organization", "eventName", "jobWorkflowRef"]
+    gha_completed_jobs_total:
+      labels: ["repository", "organization", "eventName", "jobWorkflowRef", "jobResult"]
+  gauges:
+    gha_assigned_jobs:
+      labels: ["name", "namespace"]
+    gha_running_jobs:
+      labels: ["name", "namespace"]
+    gha_registered_runners:
+      labels: ["name", "namespace"]
+    gha_busy_runners:
+      labels: ["name", "namespace"]
+    gha_desired_runners:
+      labels: ["name", "namespace"]
+    gha_idle_runners:
+      labels: ["name", "namespace"]
+  histograms:
+    gha_job_startup_duration_seconds:
+      labels: ["repository", "organization", "eventName"]
+      buckets: [1, 5, 10, 30, 60, 120, 300]
+    gha_job_execution_duration_seconds:
+      labels: ["repository", "organization", "eventName", "jobResult"]
+      buckets: [10, 30, 60, 300, 600, 1800, 3600]
+
+listenerTemplate:
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: "/metrics"
+  spec:
+    containers:
+      - name: listener
+
+template:
+  spec:
+    securityContext:
+      fsGroup: 1001
+    containers:
+      - name: runner
+        image: ghcr.io/actions/actions-runner:latest
+        command: ["/home/runner/run.sh"]
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            memory: 4Gi
