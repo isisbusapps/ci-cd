@@ -105,7 +105,7 @@ jobs:
   update_gitops:
     name: Update GitOps Repository
     runs-on: isisbusapps-proxmox
-    container: ubuntu:latest
+    container: buildpack-deps:noble-scm
     timeout-minutes: 10
     needs: generate-configmap
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'

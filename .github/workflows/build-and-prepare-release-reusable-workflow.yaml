@@ -118,6 +118,11 @@ jobs:
     outputs:
       branch-name: ${{ steps.branch.outputs.name }}
     steps:
+      - name: Install tooling
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git curl ca-certificates
+
       - name: Generate branch name
         id: branch
         run: |
@@ -174,6 +179,11 @@ jobs:
     timeout-minutes: 5
     needs: update_gitops
     steps:
+      - name: Install tooling
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git curl ca-certificates
+
       - name: Trigger GitOps PR workflow
         env:
           GH_TOKEN: ${{ secrets.workflow-token }}
@@ -189,7 +199,7 @@ jobs:
   create_tags:
     name: Create Git Tags
     runs-on: isisbusapps-proxmox
-    container: ubuntu:latest
+    container: buildpack-deps:noble-scm
     timeout-minutes: 5
     needs: build_and_push
     permissions:
