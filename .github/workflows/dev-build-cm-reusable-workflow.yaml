@@ -41,7 +41,7 @@ jobs:
   generate-configmap:
     name: Generate & Commit ConfigMap
     runs-on: ${{ inputs.runner_label }}
-    container: ubuntu:latest    
+    container: ghcr.io/catthehacker/ubuntu:act-24.04    
     timeout-minutes: 30
     permissions:
       packages: write
@@ -104,8 +104,8 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: isisbusapps-proxmox
-    container: buildpack-deps:noble-scm
+    runs-on: ghcr.io/catthehacker/ubuntu:act-24.04
+    container: ghcr.io/catthehacker/ubuntu:act-24.04
     timeout-minutes: 10
     needs: generate-configmap
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
