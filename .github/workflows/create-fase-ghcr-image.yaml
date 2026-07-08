@@ -53,6 +53,6 @@ jobs:
           file: self-hosted-gh-runners/scaling/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/build-cache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/build-cache
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/build-cache:${{ env.IMAGE_NAME }}
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/build-cache:${{ env.IMAGE_NAME }}
           build-args: ${{ inputs.build-args }}
