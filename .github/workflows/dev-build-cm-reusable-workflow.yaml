@@ -19,11 +19,6 @@ on:
         required: false
         type: string
         default: 'isisbusapps/gitops'
-      runner_label:
-        description: 'isisbusapps-proxmox runner label to target e.g. isisbusapps-proxmox or k8s-prod-runner)'
-        type: string
-        required: false
-        default: 'isisbusapps-proxmox' 
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -40,7 +35,7 @@ on:
 jobs:
   generate-configmap:
     name: Generate & Commit ConfigMap
-    runs-on: ${{ inputs.runner_label }}
+    runs-on: isisbusapps-proxmox
     container: fase-gh-runner-container:latest    
     timeout-minutes: 30
     permissions:
@@ -104,7 +99,7 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: fase-gh-runner-container:latest
+    runs-on: isisbusapps-proxmox
     container: fase-gh-runner-container:latest
     timeout-minutes: 10
     needs: generate-configmap
