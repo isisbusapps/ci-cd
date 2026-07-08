@@ -45,6 +45,11 @@ on:
         required: false
         type: boolean
         default: false
+      build-args:
+        description: 'Optional dockerfile arguments'
+        required: false
+        type: string
+        default: ''
       isPostgres:
         required: false
         type: boolean
@@ -61,7 +66,7 @@ on:
 jobs:
   build_and_push:
     name: Build and Push Container
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox-dind
     timeout-minutes: 30
     permissions:
       packages: write
@@ -101,6 +106,7 @@ jobs:
           tags: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.release-version }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: ${{ inputs.build-args }}
 
       - name: Move cache
         run: |
@@ -109,7 +115,8 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 10
     needs: build_and_push
     outputs:
@@ -170,7 +177,8 @@ jobs:
 
   trigger_pr:
     name: Trigger PR Creation
-    runs-on: ubuntu-latest
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 5
     needs: update_gitops
     steps:
@@ -188,7 +196,8 @@ jobs:
 
   create_tags:
     name: Create Git Tags
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 5
     needs: build_and_push
     permissions:
@@ -206,7 +215,8 @@ jobs:
 
   create_release:
     name: Create GitHub Pre-Release
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 10
     needs: create_tags
     permissions:
@@ -238,7 +248,8 @@ jobs:
 
   open_hotfix_pr:
     name: Open Hotfix PR
-    runs-on: self-hosted
+    runs-on: isisbusapps-proxmox
+    container: ubuntu:latest
     timeout-minutes: 5
     needs: create_tags
     if: inputs.is-hotfix
