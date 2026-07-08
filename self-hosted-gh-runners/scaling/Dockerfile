@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends  \
     git \
     yq \
     curl \
-    ca-certificates \
+    ca-certificates
     
 RUN VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)" && \
     curl -fsSLO "https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl" && \
