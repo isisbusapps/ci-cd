@@ -13,4 +13,6 @@ RUN VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     rm kubectl kubectl.sha256
 
+RUN apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 CMD ["/bin/bash"]
