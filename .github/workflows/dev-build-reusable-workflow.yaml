@@ -45,6 +45,11 @@ on:
         required: false
         type: string
         default: ''
+        default: false
+      isPostgres:
+        required: false
+        type: boolean
+        default: false       
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -127,8 +132,12 @@ jobs:
         if: ${{ inputs.ishelm-deployment }}
         with:
           cmd: |
-            yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-              './${{ inputs.gitops-patch-path }}'           
+            if ["${{ inputs.isPostgres }}" == "true" ]; then
+               yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+                './${{ inputs.gitops-patch-path }}'
+            else
+              yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+                './${{ inputs.gitops-patch-path }}'           
 
       - name: Commit and push changes
         run: |
