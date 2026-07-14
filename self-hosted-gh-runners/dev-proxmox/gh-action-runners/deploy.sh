@@ -11,7 +11,7 @@ kubectl get namespace "${RUNNER_NAMESPACE}" >/dev/null 2>&1 || \
 kubectl get namespace "${CONTROLLER_NAMESPACE}" >/dev/null 2>&1 || \
   kubectl create namespace "${CONTROLLER_NAMESPACE}"
 
-kubectl create secret generic isisbusapps-gh-runners \
+kubectl create secret generic fase-gh-runners \
   --namespace "${RUNNER_NAMESPACE}" \
   --from-literal=github_token="${ACCESS_TOKEN}" || echo "Secret exists, or errored on creation"
 

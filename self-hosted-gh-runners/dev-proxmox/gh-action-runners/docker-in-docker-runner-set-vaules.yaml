@@ -1,6 +1,6 @@
 githubConfigUrl: "https://github.com/isisbusapps"
-githubConfigSecret: isisbusapps-gh-runners
-runnerScaleSetName: "isisbusapps-proxmox-dind"
+githubConfigSecret: fase-gh-runners
+runnerScaleSetName: "fase-self-hosted-dind"
 
 minRunners: 0
 maxRunners: 5
