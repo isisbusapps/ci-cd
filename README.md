@@ -135,5 +135,5 @@ If the file is absent, `mikepenz/release-changelog-builder-action` falls back to
   workflows/
     dev-build-reusable-workflow.yaml                # Reusable: dev build + GitOps update
     build-and-prepare-release-reusable-workflow.yaml  # Reusable: versioned build + full release prep
-self-hosted-gh-runners/                             # Docs and (future) Terraform for ephemeral OpenStack runners
+self-hosted-gh-runners/openstack/                             # Docs and (future) Terraform for ephemeral OpenStack runners
 ```

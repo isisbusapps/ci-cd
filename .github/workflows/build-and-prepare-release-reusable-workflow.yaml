@@ -50,6 +50,10 @@ on:
         required: false
         type: string
         default: ''
+      isPostgres:
+        required: false
+        type: boolean
+        default: false  
       version-tag:
         description: 'Optional image tag to use instead of digest (e.g. 1.2.3). If omitted, the image digest is used.'
         required: false
@@ -59,10 +63,15 @@ on:
       workflow-token:
         required: true
 
+permissions:
+  packages: read
+  contents: read
+  pull-requests: read
+
 jobs:
   build_and_push:
     name: Build and Push Container
-    runs-on: isisbusapps-proxmox-dind
+    runs-on: fase-self-hosted-dind
     timeout-minutes: 30
     permissions:
       packages: write
@@ -111,8 +120,8 @@ jobs:
 
   update_gitops:
     name: Update GitOps Repository
-    runs-on: isisbusapps-proxmox
-    container: fase-gh-runner-container:latest
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 10
     needs: build_and_push
     outputs:
@@ -157,8 +166,12 @@ jobs:
         if: ${{ inputs.ishelm-deployment }}
         with:
           cmd: |
-            yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-              './${{ inputs.gitops-patch-path }}'
+            if ["${{ inputs.isPostgres }}" == "true" ]; then
+               yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+                './${{ inputs.gitops-patch-path }}'
+            else
+              yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+                './${{ inputs.gitops-patch-path }}' 
 
       - name: Commit and push changes
         run: |
@@ -170,8 +183,8 @@ jobs:
 
   trigger_pr:
     name: Trigger PR Creation
-    runs-on: isisbusapps-proxmox
-    container: fase-gh-runner-container:latest
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 5
     needs: update_gitops
     steps:
@@ -189,8 +202,8 @@ jobs:
 
   create_tags:
     name: Create Git Tags
-    runs-on: isisbusapps-proxmox
-    container: fase-gh-runner-container:latest
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 5
     needs: build_and_push
     permissions:
@@ -208,8 +221,8 @@ jobs:
 
   create_release:
     name: Create GitHub Pre-Release
-    runs-on: isisbusapps-proxmox
-    container: fase-gh-runner-container:latest
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 10
     needs: create_tags
     permissions:
@@ -241,8 +254,8 @@ jobs:
 
   open_hotfix_pr:
     name: Open Hotfix PR
-    runs-on: isisbusapps-proxmox
-    container: fase-gh-runner-container:latest
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 5
     needs: create_tags
     if: inputs.is-hotfix
