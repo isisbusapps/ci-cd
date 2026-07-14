@@ -45,7 +45,6 @@ on:
         required: false
         type: string
         default: ''
-        default: false
       isPostgres:
         required: false
         type: boolean
