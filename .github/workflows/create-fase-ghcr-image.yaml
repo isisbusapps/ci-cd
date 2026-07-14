@@ -4,12 +4,11 @@ on:
   push:
     branches:
       - main
-      - CreateCustomGHCRImage
     paths:
       - self-hosted-gh-runners/scaling/Dockerfile
     workflow_dispatch:
     schedule:
-      - cron: "40 23 * * * " # 23:40, daily
+      - cron: "40 23 * * 1" # 23:40, Monday
     
 env:
   REGISTRY: ghcr.io
