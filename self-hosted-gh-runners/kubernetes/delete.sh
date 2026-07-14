@@ -36,7 +36,7 @@ helm uninstall arc \
  
 
 
-kubectl delete secret isisbusapps-gh-runners \
+kubectl delete secret fase-gh-runners \
   --namespace "${RUNNER_NAMESPACE}" --ignore-not-found
  
 
@@ -45,9 +45,6 @@ kubectl delete ephemeralrunners --all -n "${RUNNER_NAMESPACE}" \
 kubectl delete pvc --all -n "${RUNNER_NAMESPACE}" --ignore-not-found
  
 
-The controller chart installs CRDs, but Helm does not remove CRDs on
-uninstall by design. Deleting them removes ALL ARC resources cluster-wide,
-so only do this if no other ARC install exists on the cluster.
 kubectl delete crd \
   autoscalinglisteners.actions.github.com \
   autoscalingrunnersets.actions.github.com \
