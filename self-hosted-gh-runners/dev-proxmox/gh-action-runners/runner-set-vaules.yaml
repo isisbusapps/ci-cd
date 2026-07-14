@@ -59,9 +59,20 @@ template:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
         command: ["/home/runner/run.sh"]
+        env:
+          - name: ACTIONS_RUNNER_CONTAINER_HOOK_TEMPLATE
+            value: /home/runner/pod-template/content
+        volumeMounts:
+          - name: pod-template
+            mountPath: /home/runner/pod-template
+            readOnly: true
         resources:
           requests:
             cpu: 500m
             memory: 1Gi
           limits:
             memory: 4Gi
+    volumes:
+      - name: pod-template
+        configMap:
+          name: hook-extension
