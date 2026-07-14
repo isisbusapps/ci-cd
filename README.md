@@ -3,6 +3,16 @@
 Centralised CI/CD configuration for the Users & Auth (U&A) team at isisbusapps. Contains reusable GitHub Actions workflows and infrastructure-as-code for self-hosted runners.
 
 ---
+## GitHub Runners
+
+Workflows for the creation & management of GitHub Self Hosted runners
+
+### Create Fase GHCR.io Image
+
+Creates an image cointaining dependencies for FASE workflows. This image is used by FASE Self Hosted Proxmox Runners. 
+
+- Build & Push image to ghcr.io
+- Push & Pull build cache from ghcr.io
 
 ## Reusable Workflows
 
