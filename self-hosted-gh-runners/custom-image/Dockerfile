@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends  \
     python3-venv \
     python3-pip
 
+# mikefarah/yq (Go) - NOT the Ubuntu 'yq' apt package (python/jq wrapper),
+# which lacks the 'e' subcommand the CI workflows rely on.
 RUN YQ_VERSION="v4.48.1" && \
     curl -fsSL -o /usr/local/bin/yq \
       "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" && \
