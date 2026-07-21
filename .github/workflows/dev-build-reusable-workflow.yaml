@@ -123,55 +123,32 @@ jobs:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
 
-      - name: DEBUG job-container view
+      - name: Install yq (mikefarah)
         run: |
-          echo "=== job container ==="
-          echo "PWD=$(pwd)"
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-          echo "expected patch path input: ${{ inputs.gitops-patch-path }}"
-          echo "--- ls -la \$GITHUB_WORKSPACE ---"
-          ls -la "$GITHUB_WORKSPACE" || true
-          echo "--- stat expected file ---"
-          ls -la "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}" || echo "NOT FOUND at that path"
-          echo "--- find deployment.yaml under workspace ---"
-          find "$GITHUB_WORKSPACE" -name deployment.yaml 2>/dev/null || true
-
-      - name: DEBUG yq-action-container view
-        uses: mikefarah/yq@v4.48.1
-        with:
-          cmd: |
-            {
-              echo "=== yq action container ==="
-              echo "PWD=$(pwd)"
-              echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-              echo "--- ls -la /github/workspace ---"
-              ls -la /github/workspace 2>&1
-              echo "--- ls -la \$GITHUB_WORKSPACE ---"
-              ls -la "$GITHUB_WORKSPACE" 2>&1
-              echo "--- find deployment.yaml everywhere ---"
-              find / -name deployment.yaml 2>/dev/null | head -20
-            } >&2
+          # ARC runs in Kubernetes container mode, where Docker container actions
+          # (mikefarah/yq@...) execute in a separate pod that does NOT get the job
+          # workspace mounted. So run the yq binary directly in this job container.
+          # curl is purged from the runner image; use python3 (present) to fetch.
+          python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64', '/tmp/yq')"
+          chmod +x /tmp/yq
+          /tmp/yq --version
 
       - name: Update image reference
-        uses: mikefarah/yq@v4.48.1
         if: ${{ !inputs.ishelm-deployment }}
-        with:
-          cmd: |
-            yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-              "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
+        run: |
+          /tmp/yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+            "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
 
       - name: Update image reference for helm deployment
-        uses: mikefarah/yq@v4.48.1
         if: ${{ inputs.ishelm-deployment }}
-        with:
-          cmd: |
-            if [ "${{ inputs.isPostgres }}" = "true" ]; then
-              yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-                "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
-            else
-              yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
-                "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
-            fi
+        run: |
+          if [ "${{ inputs.isPostgres }}" = "true" ]; then
+            /tmp/yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+              "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
+          else
+            /tmp/yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+              "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
+          fi
 
       - name: Commit and push changes
         run: |
