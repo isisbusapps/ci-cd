@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - self-hosted-gh-runners/scaling/Dockerfile
+      - self-hosted-gh-runners/custom-image/Dockerfile
     workflow_dispatch:
     schedule:
       - cron: "40 23 * * 1" # 23:40, Monday
