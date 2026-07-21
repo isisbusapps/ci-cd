@@ -6,10 +6,10 @@ on:
       - main
     paths:
       - self-hosted-gh-runners/custom-image/Dockerfile
-    workflow_dispatch:
-    schedule:
-      - cron: "40 23 * * 1" # 23:40, Monday
-    
+  workflow_dispatch:
+  schedule:
+    - cron: "40 23 * * 1" # 23:40, Monday
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: fase-gh-runner-container
