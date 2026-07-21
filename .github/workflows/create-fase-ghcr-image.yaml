@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - remove-yq-action
     paths:
       - self-hosted-gh-runners/custom-image/Dockerfile
   workflow_dispatch:
