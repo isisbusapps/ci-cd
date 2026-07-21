@@ -123,6 +123,35 @@ jobs:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
 
+      - name: DEBUG job-container view
+        run: |
+          echo "=== job container ==="
+          echo "PWD=$(pwd)"
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "expected patch path input: ${{ inputs.gitops-patch-path }}"
+          echo "--- ls -la \$GITHUB_WORKSPACE ---"
+          ls -la "$GITHUB_WORKSPACE" || true
+          echo "--- stat expected file ---"
+          ls -la "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}" || echo "NOT FOUND at that path"
+          echo "--- find deployment.yaml under workspace ---"
+          find "$GITHUB_WORKSPACE" -name deployment.yaml 2>/dev/null || true
+
+      - name: DEBUG yq-action-container view
+        uses: mikefarah/yq@v4.48.1
+        with:
+          cmd: |
+            {
+              echo "=== yq action container ==="
+              echo "PWD=$(pwd)"
+              echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+              echo "--- ls -la /github/workspace ---"
+              ls -la /github/workspace 2>&1
+              echo "--- ls -la \$GITHUB_WORKSPACE ---"
+              ls -la "$GITHUB_WORKSPACE" 2>&1
+              echo "--- find deployment.yaml everywhere ---"
+              find / -name deployment.yaml 2>/dev/null | head -20
+            } >&2
+
       - name: Update image reference
         uses: mikefarah/yq@v4.48.1
         if: ${{ !inputs.ishelm-deployment }}
