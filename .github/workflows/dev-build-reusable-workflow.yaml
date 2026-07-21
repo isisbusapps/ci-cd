@@ -123,30 +123,20 @@ jobs:
           repository: ${{ inputs.gitops-repo }}
           token: ${{ secrets.workflow-token }}
 
-      - name: Install yq (mikefarah)
-        run: |
-          # ARC runs in Kubernetes container mode, where Docker container actions
-          # (mikefarah/yq@...) execute in a separate pod that does NOT get the job
-          # workspace mounted. So run the yq binary directly in this job container.
-          # curl is purged from the runner image; use python3 (present) to fetch.
-          python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64', '/tmp/yq')"
-          chmod +x /tmp/yq
-          /tmp/yq --version
-
       - name: Update image reference
         if: ${{ !inputs.ishelm-deployment }}
         run: |
-          /tmp/yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+          yq e -i '.spec.template.spec.containers[0].image = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
             "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
 
       - name: Update image reference for helm deployment
         if: ${{ inputs.ishelm-deployment }}
         run: |
           if [ "${{ inputs.isPostgres }}" = "true" ]; then
-            /tmp/yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+            yq e -i '.image_duo_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
               "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
           else
-            /tmp/yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
+            yq e -i '.image_ref = "${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}"' \
               "$GITHUB_WORKSPACE/${{ inputs.gitops-patch-path }}"
           fi
 
