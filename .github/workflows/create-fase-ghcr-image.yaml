@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - main
+      - remove-yq-action
     paths:
       - self-hosted-gh-runners/custom-image/Dockerfile
-    workflow_dispatch:
-    schedule:
-      - cron: "40 23 * * 1" # 23:40, Monday
-    
+  workflow_dispatch:
+  schedule:
+    - cron: "40 23 * * 1" # 23:40, Monday
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: fase-gh-runner-container
@@ -48,8 +49,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: self-hosted-gh-runners/scaling/
-          file: self-hosted-gh-runners/scaling/Dockerfile
+          context: self-hosted-gh-runners/custom-image/
+          file: self-hosted-gh-runners/custom-image/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/build-cache:${{ env.IMAGE_NAME }}
