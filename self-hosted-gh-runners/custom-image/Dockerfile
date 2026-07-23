@@ -23,6 +23,12 @@ RUN VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
     rm kubectl kubectl.sha256
 
+# Install Maven from Apache's official binary distribution.
+ARG MAVEN_VERSION=3.9.9
+RUN curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+        | tar -xz -C /opt/ \
+    && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn
+
 RUN apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 CMD ["/bin/bash"]
