@@ -101,14 +101,14 @@ jobs:
  
           kubectl create cm "${{ inputs.configmap_name }}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/"${{ inputs.configmap_name }}".yaml
           echo "============= Generated manifest==================="
-          cat /tmp/"${{ inputs.configmap_name }}".yaml
+          cat /tmp/${{ inputs.configmap_name }}.yaml
           echo "===================================================" 
       
       - name: Upload generated configmap
         uses: actions/upload-artifact@v7
         with:
           name: configmap-${{ inputs.app-name }}
-          path: /tmp/"${{ inputs.configmap_name }}".yaml  
+          path: /tmp/${{ inputs.configmap_name }}.yaml  
 
   update_gitops:
     name: Update GitOps Repository
@@ -138,7 +138,7 @@ jobs:
           git config --local user.name "GitHub Action"
           CM="${{ inputs.configmap_name }}"
           TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps-dev"                  
-          cp /tmp/"${CM}".yaml "${TARGET_DIR}/${CM}.yaml"          
+          cp "/tmp/${CM}.yaml" "${TARGET_DIR}/${CM}.yaml"          
           git add "${TARGET_DIR}/${CM}.yaml"
           GITOPS_SHA=$(git rev-parse --short HEAD)
           git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
