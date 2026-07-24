@@ -37,8 +37,7 @@ on:
         description: 'The .data key the file was stored under'
         value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
 
-permissions:
-  packages: read
+permissions:  
   contents: read
   pull-requests: read
 
@@ -46,10 +45,12 @@ jobs:
   generate-configmap:
     name: Generate & Commit ConfigMap
     runs-on: ${{ inputs.runner_label }}
-    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest    
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
+    defaults:
+      run:
+        shell: bash    
     timeout-minutes: 30
-    permissions:
-      packages: write
+    permissions:      
       contents: read
     
     outputs:
