@@ -37,8 +37,7 @@ on:
         description: 'The .data key the file was stored under'
         value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
 
-permissions:
-  packages: read
+permissions:  
   contents: read
   pull-requests: read
 
@@ -51,8 +50,7 @@ jobs:
       run:
         shell: bash    
     timeout-minutes: 30
-    permissions:
-      packages: read
+    permissions:      
       contents: read
     
     outputs:
