@@ -136,8 +136,8 @@ jobs:
           cd gitops
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          CM="${{ inputs.configmap_name }}"
-          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/templates/client-configmaps-dev"                  
+          CM="${{ inputs.configmap_name }}"          
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/config-maps/dev"                  
           cp "/tmp/${CM}.yaml" "${TARGET_DIR}/${CM}.yaml"          
           git add "${TARGET_DIR}/${CM}.yaml"
           GITOPS_SHA=$(git rev-parse --short HEAD)
