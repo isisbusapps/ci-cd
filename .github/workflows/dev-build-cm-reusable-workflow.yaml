@@ -141,5 +141,5 @@ jobs:
           cp "/tmp/${CM}.yaml" "${TARGET_DIR}/${CM}.yaml"          
           git add "${TARGET_DIR}/${CM}.yaml"
           GITOPS_SHA=$(git rev-parse --short HEAD)
-          git commit -m "[CD] Update ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          git commit -m "[CD] Update User exchange client - ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
           git push
