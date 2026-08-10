@@ -1,0 +1,155 @@
+name: Prod Build and Release CM (Reusable)
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: 'Human-readable name for commit messages'
+        required: true
+        type: string
+      configmap_file:
+        description: 'Repo-relative path to the ConfigMap manifest'
+        type: string
+        required: true
+      configmap_name:
+        description: 'Name of the Config map'
+        type: string
+        required: true
+      release-version:
+        description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
+        required: true
+        type: string
+      version-file-path:
+        description: 'Relative path in Source repo to update version'  
+        required: true     
+        type: string     
+      gitops-repo:
+        required: false
+        type: string
+        default: 'isisbusapps/gitops'
+      runner_label:
+        description: 'fase-self-hosted runner label to target e.g. fase-self-hosted or k8s-prod-runner)'
+        type: string
+        required: false
+        default: 'fase-self-hosted' 
+    secrets:
+      workflow-token:
+        description: 'PAT with repo+workflow scope for the GitOps repo'
+        required: true
+
+    outputs:
+      configmap_output_name:
+        description: 'Name of the ConfigMap that was created/updated'
+        value: ${{ jobs.generate-configmap.outputs.configmap_name }}
+      data_key_used:
+        description: 'The .data key the file was stored under'
+        value: ${{ jobs.generate-configmap.outputs.data_key_used }}     
+
+permissions:
+  packages: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  generate-configmap:
+    name: Generate & Commit ConfigMap
+    runs-on: ${{ inputs.runner_label }}
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
+    defaults:
+      run:
+        shell: bash    
+    timeout-minutes: 30
+    permissions:
+      packages: read
+      contents: read
+    
+    outputs:
+      configmap_name: ${{ steps.resolve.outputs.configmap_name }}
+      data_key_used: ${{ steps.resolve.outputs.data_key }}   
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+      
+      - name: Validate source file
+        run: |
+          FILE="${{ inputs.configmap_file }}"
+ 
+          if [[ ! -f "${FILE}" ]]; then
+            echo "::error file=${FILE}::Source file not found: ${FILE}"
+            exit 1
+          fi
+ 
+          # Basic sanity — reject empty files
+          if [[ ! -s "${FILE}" ]]; then
+            echo "::error file=${FILE}::Source file is empty: ${FILE}"
+            exit 1
+          fi 
+          echo "Source file found: ${FILE} ($(wc -l < "${FILE}") lines)" 
+      
+      - name: Resolve parameters
+        id: resolve
+        run: |
+          if [[ -n "${{ inputs.configmap_name }}" ]]; then
+            CM="${{ inputs.configmap_name }}"
+          else
+            echo "::error::The configmap name cannot be empty!"
+            exit 1
+          fi   
+          echo "configmap_name=${CM}"  >> "$GITHUB_OUTPUT" 
+          echo "ConfigMap name : ${CM}"
+         
+
+      - name: Generate ConfigMap manifest
+        id: generate
+        run: |      
+          FILE="${{ inputs.configmap_file }}"
+ 
+          echo "Generating ConfigMap manifest..."
+ 
+          kubectl create cm "${{ inputs.configmap_name }}" --from-file="${FILE}" --dry-run=client -o yaml > /tmp/"${{ inputs.configmap_name }}".yaml
+          echo "============= Generated manifest==================="
+          cat /tmp/${{ inputs.configmap_name }}.yaml
+          echo "===================================================" 
+      
+      - name: Upload generated configmap
+        uses: actions/upload-artifact@v7
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/${{ inputs.configmap_name }}.yaml  
+
+      - name: Update version comment
+        run: |
+          sed -i 's/# version: .*/# version: ${{ inputs.release-version }}/' './${{ inputs.version-file-path }}'      
+
+  update_gitops:
+    name: Update GitOps Repository
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
+    timeout-minutes: 10
+    needs: generate-configmap    
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.gitops-repo }}
+          token: ${{ secrets.workflow-token }}
+          path: gitops
+
+      - name: Download generated configmap
+        uses: actions/download-artifact@v8
+        with:
+          name: configmap-${{ inputs.app-name }}
+          path: /tmp/
+
+      - name: Copy, Commit and push changes
+        run: |
+          cd gitops
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          CM="${{ inputs.configmap_name }}"          
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/config-maps/prod"                  
+          cp "/tmp/${CM}.yaml" "${TARGET_DIR}/${CM}.yaml"          
+          git add "${TARGET_DIR}/${CM}.yaml"
+          GITOPS_SHA=$(git rev-parse --short HEAD)
+          git commit -m "[CD] Release - Update User exchange client - ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          git push  
