@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends  \
     ca-certificates \
     python3 \
     python3-venv \
-    python3-pip
+    python3-pip \
+    gh
     
 RUN VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)" && \
     curl -fsSLO "https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl" && \
