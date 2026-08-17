@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends  \
     ca-certificates \
     python3 \
     python3-venv \
-    python3-pip
+    python3-pip \
+    gh
 
 # mikefarah/yq (Go) - NOT the Ubuntu 'yq' apt package (python/jq wrapper),
 # which lacks the 'e' subcommand the CI workflows rely on.
