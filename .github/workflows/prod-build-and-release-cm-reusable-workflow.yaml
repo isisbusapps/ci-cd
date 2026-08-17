@@ -1,5 +1,4 @@
-name: Dev Build and Deploy Config Maps (Reusable)
-
+name: Prod Build and Release CM (Reusable)
 on:
   workflow_call:
     inputs:
@@ -14,7 +13,15 @@ on:
       configmap_name:
         description: 'Name of the Config map'
         type: string
-        required: true 
+        required: true
+      release-version:
+        description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
+        required: true
+        type: string
+      version-file-path:
+        description: 'Relative path in Source repo to update version'  
+        required: true     
+        type: string     
       gitops-repo:
         required: false
         type: string
@@ -110,13 +117,16 @@ jobs:
           name: configmap-${{ inputs.app-name }}
           path: /tmp/${{ inputs.configmap_name }}.yaml  
 
+      - name: Update version comment
+        run: |
+          sed -i 's/# version: .*/# version: ${{ inputs.release-version }}/' './${{ inputs.version-file-path }}'      
+
   update_gitops:
     name: Update GitOps Repository
     runs-on: fase-self-hosted
     container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
     timeout-minutes: 10
-    needs: generate-configmap
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: generate-configmap    
     steps:
       - name: Checkout GitOps repository
         uses: actions/checkout@v6
@@ -137,9 +147,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           CM="${{ inputs.configmap_name }}"          
-          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/config-maps/dev"                  
+          TARGET_DIR="./components/ua/user-exchange-client/user-exchange-client-chart/config-maps/prod"                  
           cp "/tmp/${CM}.yaml" "${TARGET_DIR}/${CM}.yaml"          
           git add "${TARGET_DIR}/${CM}.yaml"
           GITOPS_SHA=$(git rev-parse --short HEAD)
-          git commit -m "[CD] Update User exchange client - ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-          git push
+          git commit -m "[CD] Release - Update User exchange client - ${{ inputs.app-name }} with commit ${GITOPS_SHA} - src: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+          git push  
