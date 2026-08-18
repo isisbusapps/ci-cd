@@ -14,14 +14,6 @@ on:
         description: 'Name of the Config map'
         type: string
         required: true
-      release-version:
-        description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
-        required: true
-        type: string
-      version-file-path:
-        description: 'Relative path in Source repo to update version'  
-        required: true     
-        type: string     
       gitops-repo:
         required: false
         type: string
@@ -115,11 +107,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: configmap-${{ inputs.app-name }}
-          path: /tmp/${{ inputs.configmap_name }}.yaml  
-
-      - name: Update version comment
-        run: |
-          sed -i 's/# version: .*/# version: ${{ inputs.release-version }}/' './${{ inputs.version-file-path }}'      
+          path: /tmp/${{ inputs.configmap_name }}.yaml
 
   update_gitops:
     name: Update GitOps Repository
