@@ -74,9 +74,33 @@ on:
         required: false
         type: string
         default: ''
+      run-liquibase:
+        description: 'Run a Liquibase update against the prod database as part of this release'
+        required: false
+        type: boolean
+        default: false
+      liquibase-changelog-dir:
+        description: 'Repo-relative changelog directory. Only used when run-liquibase is true.'
+        required: false
+        type: string
+        default: 'liquibase'
+      liquibase-changelog-file:
+        description: 'Changelog entry point, relative to liquibase-changelog-dir'
+        required: false
+        type: string
+        default: 'changelog.xml'
     secrets:
       workflow-token:
         required: true
+      db-url:
+        description: 'JDBC URL for the prod database. Required when run-liquibase is true.'
+        required: false
+      db-username:
+        description: 'Prod database user. Required when run-liquibase is true.'
+        required: false
+      db-password:
+        description: 'Prod database password. Required when run-liquibase is true.'
+        required: false
 
 permissions:
   packages: read
@@ -132,6 +156,21 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  liquibase_update:
+    name: Update Database Schema
+    needs: build_and_push
+    if: ${{ inputs.run-liquibase }}
+    uses: isisbusapps/ci-cd/.github/workflows/liquibase-update-reusable-workflow.yaml@main
+    with:
+      app-name: ${{ inputs.app-name }}
+      environment: PROD
+      changelog-dir: ${{ inputs.liquibase-changelog-dir }}
+      changelog-file: ${{ inputs.liquibase-changelog-file }}
+    secrets:
+      db-url: ${{ secrets.db-url }}
+      db-username: ${{ secrets.db-username }}
+      db-password: ${{ secrets.db-password }}
 
   update_gitops:
     name: Update GitOps Repository

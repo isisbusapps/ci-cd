@@ -48,11 +48,35 @@ on:
       isPostgres:
         required: false
         type: boolean
-        default: false       
+        default: false
+      run-liquibase:
+        description: 'Run a Liquibase update against the dev database as part of this build'
+        required: false
+        type: boolean
+        default: false
+      liquibase-changelog-dir:
+        description: 'Repo-relative changelog directory. Only used when run-liquibase is true.'
+        required: false
+        type: string
+        default: 'liquibase'
+      liquibase-changelog-file:
+        description: 'Changelog entry point, relative to liquibase-changelog-dir'
+        required: false
+        type: string
+        default: 'changelog.xml'
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
         required: true
+      db-url:
+        description: 'JDBC URL for the dev database. Required when run-liquibase is true.'
+        required: false
+      db-username:
+        description: 'Dev database user. Required when run-liquibase is true.'
+        required: false
+      db-password:
+        description: 'Dev database password. Required when run-liquibase is true.'
+        required: false
 
 permissions:
   packages: read
@@ -108,6 +132,21 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  liquibase_update:
+    name: Update Database Schema
+    needs: build_and_push
+    if: ${{ inputs.run-liquibase && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    uses: isisbusapps/ci-cd/.github/workflows/liquibase-update-reusable-workflow.yaml@main
+    with:
+      app-name: ${{ inputs.app-name }}
+      environment: DEV
+      changelog-dir: ${{ inputs.liquibase-changelog-dir }}
+      changelog-file: ${{ inputs.liquibase-changelog-file }}
+    secrets:
+      db-url: ${{ secrets.db-url }}
+      db-username: ${{ secrets.db-username }}
+      db-password: ${{ secrets.db-password }}
 
   update_gitops:
     name: Update GitOps Repository
