@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: hook-extension
-  namespace: arc-gh-runners
+  namespace: fase-gh-runners
 data:
   content: |
     spec:

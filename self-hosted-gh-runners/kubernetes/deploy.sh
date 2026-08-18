@@ -15,6 +15,8 @@ kubectl create secret generic fase-gh-runners \
   --namespace "${RUNNER_NAMESPACE}" \
   --from-literal=github_token="${ACCESS_TOKEN}" || echo "Secret exists, or errored on creation"
 
+kubectl apply --namespace "${RUNNER_NAMESPACE}" -f hook-extension.yaml || echo "Hook Extension exists, or errored on creation"
+
 helm upgrade --install arc \
   --namespace "${CONTROLLER_NAMESPACE}" \
   --version "${CHART_VERSION}" \
