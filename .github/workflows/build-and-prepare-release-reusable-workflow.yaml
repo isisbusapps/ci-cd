@@ -178,25 +178,6 @@ jobs:
           git commit -am "[CD] Release ${{ inputs.app-name }} ${{ inputs.release-version }}"
           git push --set-upstream origin "${{ steps.branch.outputs.name }}"
 
-  trigger_pr:
-    name: Trigger PR Creation
-    runs-on: fase-self-hosted
-    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
-    timeout-minutes: 5
-    needs: update_gitops
-    steps:
-      - name: Trigger GitOps PR workflow
-        env:
-          GH_TOKEN: ${{ secrets.workflow-token }}
-        run: |
-          gh workflow run create-release-pr.yaml \
-            --repo "${{ inputs.gitops-repo }}" \
-            --field branchName="${{ needs.update_gitops.outputs.branch-name }}" \
-            --field releaseVersion="${{ inputs.release-version }}" \
-            --field imageName="${{ github.repository_owner }}/${{ inputs.image-name }}" \
-            --field sourceRepo="${{ github.repository }}" \
-            --field actor="${{ github.actor }}"
-
   create_tags:
     name: Create Git Tags
     runs-on: fase-self-hosted
@@ -275,3 +256,22 @@ jobs:
             --body "Automated PR to merge hotfix branch back into the default branch after release ${{ inputs.release-version }}." \
             --base "${{ github.event.repository.default_branch }}" \
             --head "${{ github.ref_name }}"
+
+  trigger_pr:
+    name: Trigger PR Creation
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
+    timeout-minutes: 5
+    needs: [update_gitops, create_release]
+    steps:
+      - name: Trigger GitOps PR workflow
+        env:
+          GH_TOKEN: ${{ secrets.workflow-token }}
+        run: |
+          gh workflow run create-release-pr.yaml \
+            --repo "${{ inputs.gitops-repo }}" \
+            --field branchName="${{ needs.update_gitops.outputs.branch-name }}" \
+            --field releaseVersion="${{ inputs.release-version }}" \
+            --field imageName="${{ github.repository_owner }}/${{ inputs.image-name }}" \
+            --field sourceRepo="${{ github.repository }}" \
+            --field actor="${{ github.actor }}"
