@@ -1,0 +1,131 @@
+name: Liquibase Update (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: 'Human-readable name, used in logs e.g. User Claims'
+        required: true
+        type: string
+      environment:
+        description: 'Environment this uses'
+        required: true
+        type: string
+      ref:
+        description: 'Release tag or branch to read the changelog from.'
+        required: false
+        type: string
+        default: ''
+      changelog-dir:
+        description: 'Repo-relative directory mounted at /liquibase/changelog'
+        required: false
+        type: string
+        default: 'liquibase'
+      changelog-file:
+        description: 'Changelog entry point, relative to changelog-dir'
+        required: false
+        type: string
+        default: 'changelog.xml'
+      liquibase-command:
+        description: 'Liquibase command to run e.g. update, updateSQL, status, validate'
+        required: false
+        type: string
+        default: 'update'
+      liquibase-version:
+        description: 'Tag of the liquibase/liquibase image'
+        required: false
+        type: string
+        default: '4.20'
+      contexts:
+        description: 'Optional Liquibase contexts filter'
+        required: false
+        type: string
+        default: ''
+      labels:
+        description: 'Optional Liquibase labels filter'
+        required: false
+        type: string
+        default: ''
+      extra-args:
+        description: 'Optional extra arguments appended to the Liquibase command'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      db-url:
+        description: 'DB url'
+        required: true
+      db-username:
+        description: 'Database user'
+        required: true
+      db-password:
+        description: 'Database password'
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+concurrency:
+  group: liquibase-${{ github.repository }}-${{ inputs.app-name }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  liquibase_update:
+    name: Update database schema (${{ inputs.environment }})
+    runs-on: fase-self-hosted-dind
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Validate changelog
+        run: |
+          set -euo pipefail
+
+          CHANGELOG_DIR="${{ inputs.changelog-dir }}"
+          CHANGELOG_FILE="${{ inputs.changelog-file }}"
+
+          if [[ ! -d "${CHANGELOG_DIR}" ]]; then
+            echo "::error::Changelog directory not found: ${CHANGELOG_DIR}"
+            exit 1
+          fi
+
+          if [[ ! -f "${CHANGELOG_DIR}/${CHANGELOG_FILE}" ]]; then
+            echo "::error file=${CHANGELOG_DIR}/${CHANGELOG_FILE}::Changelog not found: ${CHANGELOG_DIR}/${CHANGELOG_FILE}"
+            exit 1
+          fi
+
+          echo "Changelog: ${CHANGELOG_DIR}/${CHANGELOG_FILE}"
+
+      - name: Run Liquibase ${{ inputs.liquibase-command }}
+        env:
+          LIQUIBASE_COMMAND_URL: ${{ secrets.db-url }}
+          LIQUIBASE_COMMAND_USERNAME: ${{ secrets.db-username }}
+          LIQUIBASE_COMMAND_PASSWORD: ${{ secrets.db-password }}
+        run: |
+          set -euo pipefail
+
+          echo "Running '${{ inputs.liquibase-command }}' for ${{ inputs.app-name }} against ${{ inputs.environment }}"
+
+          ARGS=()
+          if [[ -n "${{ inputs.contexts }}" ]]; then
+            ARGS+=("--contexts=${{ inputs.contexts }}")
+          fi
+          if [[ -n "${{ inputs.labels }}" ]]; then
+            ARGS+=("--labels=${{ inputs.labels }}")
+          fi
+          docker run --rm --network host \
+            -e LIQUIBASE_COMMAND_URL \
+            -e LIQUIBASE_COMMAND_USERNAME \
+            -e LIQUIBASE_COMMAND_PASSWORD \
+            -v "$(pwd)/${{ inputs.changelog-dir }}:/liquibase/changelog" \
+            "liquibase/liquibase:${{ inputs.liquibase-version }}" \
+            ${{ inputs.liquibase-command }} \
+            --changelog-file="${{ inputs.changelog-file }}" \
+            "${ARGS[@]}" \
+            ${{ inputs.extra-args }}
