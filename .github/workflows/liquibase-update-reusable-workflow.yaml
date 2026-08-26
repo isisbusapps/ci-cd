@@ -11,6 +11,11 @@ on:
         description: 'Environment this uses'
         required: true
         type: string
+      ref:
+        description: 'Release tag or branch to read the changelog from.'
+        required: false
+        type: string
+        default: ''
       changelog-dir:
         description: 'Repo-relative directory mounted at /liquibase/changelog'
         required: false
@@ -75,6 +80,8 @@ jobs:
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Validate changelog
         run: |
