@@ -64,6 +64,11 @@ on:
         required: false
         type: string
         default: 'changelog.xml'
+      liquibase-dispatch-branch:
+        description: 'This would be main or develop etc'
+        required: false
+        type: string
+        default: ''
     secrets:
       workflow-token:
         description: 'PAT with repo+workflow scope for the GitOps repo'
@@ -136,7 +141,15 @@ jobs:
   liquibase_update:
     name: Update Database Schema
     needs: build_and_push
-    if: ${{ inputs.run-liquibase && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    if: >-
+      ${{ inputs.run-liquibase && (
+        github.event_name == 'push' || (
+          github.event_name == 'workflow_dispatch' && (
+            inputs.liquibase-dispatch-branch == '' ||
+            github.ref == format('refs/heads/{0}', inputs.liquibase-dispatch-branch)
+          )
+        )
+      ) }}
     uses: isisbusapps/ci-cd/.github/workflows/liquibase-update-reusable-workflow.yaml@main
     with:
       app-name: ${{ inputs.app-name }}
