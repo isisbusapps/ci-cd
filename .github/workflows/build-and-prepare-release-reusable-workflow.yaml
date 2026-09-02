@@ -147,7 +147,7 @@ jobs:
       - name: Resolve image reference
         id: resolve_image
         run: |
-          if [[ -n "${{ inputs.version-tag }}" ]]; then
+          if [ -n "${{ inputs.version-tag }}" ]; then
             echo "image-ref=${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}:${{ inputs.version-tag }}" >> $GITHUB_OUTPUT
           else
             echo "image-ref=${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ needs.build_and_push.outputs.image-digest }}" >> $GITHUB_OUTPUT
