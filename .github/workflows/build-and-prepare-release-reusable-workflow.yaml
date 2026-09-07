@@ -17,6 +17,21 @@ on:
         description: 'Semver string WITHOUT v prefix, e.g. 1.2.3'
         required: true
         type: string
+      tag-prefix:
+        description: 'Monorepo only. Prefix for tags and the changelog range, e.g. frontend-. Leave empty for single-app repos.'
+        required: false
+        type: string
+        default: ''
+      changelog-paths:
+        description: 'Monorepo only. Newline-separated path prefixes; only commits touching them appear in the changelog, e.g. frontend/'
+        required: false
+        type: string
+        default: ''
+      changelog-config-path:
+        description: 'Path in the calling repo to the changelog config'
+        required: false
+        type: string
+        default: '.github/release-changelog-config.json'
       is-hotfix:
         required: false
         type: boolean
@@ -193,10 +208,10 @@ jobs:
 
       - name: Create and push tags
         run: |
-          git tag "${{ inputs.release-version }}"
-          git push origin "${{ inputs.release-version }}"
-          git tag -f latest
-          git push -f origin latest
+          git tag "${{ inputs.tag-prefix }}${{ inputs.release-version }}"
+          git push origin "${{ inputs.tag-prefix }}${{ inputs.release-version }}"
+          git tag -f "${{ inputs.tag-prefix }}latest"
+          git push -f origin "${{ inputs.tag-prefix }}latest"
 
   create_release:
     name: Create GitHub Pre-Release
@@ -213,20 +228,46 @@ jobs:
       - name: Checkout source repository
         uses: actions/checkout@v6
 
+      - name: Build changelog configuration
+        id: changelog_config
+        if: inputs.tag-prefix != ''
+        env:
+          CONFIG_PATH: ${{ inputs.changelog-config-path }}
+          TAG_PREFIX: ${{ inputs.tag-prefix }}
+        run: |
+          if [ ! -f "$CONFIG_PATH" ]; then
+            CONFIG_PATH=/tmp/changelog-config-base.json
+            echo '{}' > "$CONFIG_PATH"
+          fi
+
+          export PATTERN="^${TAG_PREFIX}([0-9].*)\$"
+          yq -o=json -I=0 '
+            .tag_resolver.method = "semver" |
+            .tag_resolver.filter.pattern = strenv(PATTERN) |
+            .tag_resolver.filter.flags = "gu" |
+            .tag_resolver.transformer.pattern = strenv(PATTERN) |
+            .tag_resolver.transformer.target = "$1"
+          ' "$CONFIG_PATH" > /tmp/changelog-config.json
+
+          cat /tmp/changelog-config.json
+          echo "json=$(cat /tmp/changelog-config.json)" >> $GITHUB_OUTPUT
+
       - name: Build Changelog
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         with:
-          toTag: ${{ inputs.release-version }}
-          configuration: '.github/release-changelog-config.json'
+          toTag: ${{ inputs.tag-prefix }}${{ inputs.release-version }}
+          configuration: ${{ inputs.changelog-config-path }}
+          configurationJson: ${{ steps.changelog_config.outputs.json }}
+          includeOnlyPaths: ${{ inputs.changelog-paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Pre-Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.release-version }}
-          name: Release ${{ inputs.release-version }}
+          tag_name: ${{ inputs.tag-prefix }}${{ inputs.release-version }}
+          name: Release ${{ inputs.tag-prefix != '' && format('{0} ', inputs.app-name) || '' }}${{ inputs.release-version }}
           body: ${{ steps.build_changelog.outputs.changelog }}
           prerelease: true
         env:
@@ -252,8 +293,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr create \
-            --title "Merge hotfix ${{ inputs.release-version }} into ${{ github.event.repository.default_branch }}" \
-            --body "Automated PR to merge hotfix branch back into the default branch after release ${{ inputs.release-version }}." \
+            --title "Merge hotfix ${{ inputs.tag-prefix }}${{ inputs.release-version }} into ${{ github.event.repository.default_branch }}" \
+            --body "Automated PR to merge hotfix branch back into the default branch after release ${{ inputs.tag-prefix }}${{ inputs.release-version }}." \
             --base "${{ github.event.repository.default_branch }}" \
             --head "${{ github.ref_name }}"
 
