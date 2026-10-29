@@ -22,7 +22,7 @@ jobs:
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@v3
         
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Approve PR if not a breaking change, and not already approved
         if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
         run: |
