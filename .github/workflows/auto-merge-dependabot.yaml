@@ -6,6 +6,7 @@ on:
 permissions:
   pull-requests: write
   contents: write
+  packages: read
 
 # Based on samples:
 # https://github.com/dependabot/fetch-metadata#auto-approving
