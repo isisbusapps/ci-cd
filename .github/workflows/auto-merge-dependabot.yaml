@@ -1,0 +1,46 @@
+name: Dependabot auto approve and merge
+
+on: 
+  workflow_call:
+
+permissions:
+  pull-requests: write
+  contents: write
+  packages: read
+
+# "Allow auto-merge" must be enabled in the repo's settings page
+# Requirements for the merges can be configured in the Branch protection rule page under Settings > Branches > Edit
+#
+# Based on samples:
+# https://github.com/dependabot/fetch-metadata#auto-approving
+# https://github.com/dependabot/fetch-metadata#enabling-auto-merge
+jobs:
+  auto-approve-and-merge:
+    runs-on: fase-self-hosted
+    container: ghcr.io/isisbusapps/fase-gh-runner-container:latest
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    steps:
+      # Extract information about the dependencies being updated by a Dependabot-generated PR
+      - name: Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v3
+        
+      - uses: actions/checkout@v7
+      - name: Approve PR if not a breaking change, and not already approved
+        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
+        run: |
+          gh pr checkout "$PR_URL" # sets the upstream metadata for `gh pr status`
+          if [ "$(gh pr status --json reviewDecision -q .currentBranch.reviewDecision)" != "APPROVED" ];
+          then gh pr review --approve "$PR_URL"
+          else echo "PR already approved, skipping additional approvals to minimize emails/notification noise.";
+          fi
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      
+      - name: Enable auto-merge for non breaking changes
+        if: ${{steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'}}
+        run: gh pr merge --auto --merge --delete-branch "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
