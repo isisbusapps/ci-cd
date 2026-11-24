@@ -1,0 +1,33 @@
+
+name: Test Pi on Self Hosted Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-pi:
+    runs-on: fase-self-hosted
+
+    steps:
+      - name: Check runner environment
+        run: |
+          echo "Runner hostname:"
+          hostname
+
+          echo "Operating system:"
+          uname -a
+
+          echo "Current user:"
+          whoami
+
+      - name: Check Docker availability
+        run: |
+          echo "Docker version:"
+          docker --version
+
+          echo "Docker daemon information:"
+          docker info
+
+      - name: Test Docker container
+        run: |
+          docker run --rm hello-world
