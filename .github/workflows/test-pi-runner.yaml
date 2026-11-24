@@ -4,7 +4,7 @@ name: Test Pi on Self Hosted Runner
 on:
   push:
     branches:
-      - github-runner-test
+      - github-runners-test
 
 jobs:
   test-pi:
