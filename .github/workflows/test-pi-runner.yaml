@@ -2,7 +2,9 @@
 name: Test Pi on Self Hosted Runner
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - github-runner-test
 
 jobs:
   test-pi:
